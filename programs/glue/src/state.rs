@@ -24,7 +24,7 @@ pub enum ArenaStatus {
     Finished,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, Copy, Default)]
 pub struct Bot {
     pub x: i16,
     pub y: i16,
@@ -33,6 +33,7 @@ pub struct Bot {
     pub score: u64,
     pub credits: u64,
     pub carry_capacity: u16,
+    pub active: bool,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, Copy, Default)]

@@ -15,7 +15,7 @@ declare_id!("F2k77ye35MiL7n5TZfe74fRPK1MmZiX3eAJBzEz2wMYm");
 pub mod glue {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::handler(ctx)
+    pub fn init_arena(ctx: Context<InitArena>, id: u64) -> Result<()> {
+        instructions::init_arena::handler(ctx, id)
     }
 }

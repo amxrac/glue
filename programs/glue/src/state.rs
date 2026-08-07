@@ -1,3 +1,4 @@
+use crate::constants::*;
 use anchor_lang::prelude::*;
 
 #[account]
@@ -9,7 +10,7 @@ pub struct ArenaAccount {
     pub players: Vec<Pubkey>,
     pub bots: [Bot; 6],
     pub status: ArenaStatus,
-    pub vrf_seed: u64,
+    pub vrf_seed: Option<[u8; 32]>,
     pub spawn_counter: u32,
     pub resources: [Resource; 20],
     pub tick: u64,
@@ -41,4 +42,17 @@ pub struct Resource {
     pub x: i16,
     pub y: i16,
     pub active: bool,
+}
+
+pub const fn default_bot() -> Bot {
+    Bot {
+        x: 0,
+        y: 0,
+        vision: DEFAULT_VISION,
+        speed: DEFAULT_SPEED,
+        score: 0,
+        credits: STARTING_CREDITS,
+        carry_capacity: DEFAULT_CARRY_CAPACITY,
+        active: false,
+    }
 }

@@ -1,6 +1,6 @@
 use std::vec;
 
-use crate::{constants::*, error::ArenaError, state::ArenaAccount, ArenaStatus, Bot};
+use crate::{error::ArenaError, state::ArenaAccount, ArenaStatus};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -19,7 +19,7 @@ impl<'info> JoinArena<'info> {
     pub fn join_arena(&mut self) -> Result<()> {
         require!(
             self.arena_account.status == ArenaStatus::Waiting,
-            ArenaError::InvalidArena
+            ArenaError::ArenaNotJoinable
         );
         require!(self.arena_account.players.len() < 6, ArenaError::ArenaFull);
         require!(
@@ -29,16 +29,7 @@ impl<'info> JoinArena<'info> {
 
         let slot = self.arena_account.players.len();
         self.arena_account.players.push(self.player.key());
-        self.arena_account.bots[slot] = Bot {
-            x: 0,
-            y: 0,
-            vision: DEFAULT_VISION,
-            speed: DEFAULT_SPEED,
-            score: 0,
-            credits: STARTING_CREDITS,
-            carry_capacity: DEFAULT_CARRY_CAPACITY,
-            active: true,
-        };
+        self.arena_account.bots[slot].active = true;
 
         Ok(())
     }

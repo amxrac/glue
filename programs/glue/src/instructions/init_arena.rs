@@ -1,6 +1,6 @@
 use std::vec;
 
-use crate::{state::ArenaAccount, Bot, Resource};
+use crate::{state::*, Resource};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -11,7 +11,7 @@ pub struct InitArena<'info> {
     #[account(
         init,
         payer = host,
-        space = ArenaAccount::INIT_SPACE,
+        space = 8 + ArenaAccount::INIT_SPACE,
         seeds = [b"arena", host.key().as_ref(), &id.to_le_bytes()],
         bump
     )]
@@ -25,9 +25,13 @@ impl<'info> InitArena<'info> {
             id,
             host: self.host.key(),
             players: vec![self.host.key()],
-            bots: [Bot::default(); 6],
+            bots: {
+                let mut bots = [default_bot(); 6];
+                bots[0].active = true;
+                bots
+            },
             status: crate::ArenaStatus::Waiting,
-            vrf_seed: 0,
+            vrf_seed: None,
             spawn_counter: 0,
             resources: [Resource::default(); 20],
             tick: 0,

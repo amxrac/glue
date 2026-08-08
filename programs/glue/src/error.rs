@@ -4,12 +4,16 @@ use anchor_lang::prelude::*;
 pub enum ArenaError {
     #[msg("Invalid Arena")]
     InvalidArena,
-    #[msg("Arena Full")]
+    #[msg("Arena full")]
     ArenaFull,
-    #[msg("Arena not Full")]
+    #[msg("Arena not full")]
     ArenaNotFull,
     #[msg("Player already in Arena")]
     PlayerAlreadyInArena,
     #[msg("Arena not joinable")]
     ArenaNotJoinable,
+    #[msg("Randomness not ready")]
+    RandomnessNotReady,
+    #[msg("Unable to find spawn position")]
+    UnableToFindSpawnPosition,
 }

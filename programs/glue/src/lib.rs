@@ -22,4 +22,8 @@ pub mod glue {
     pub fn join_arena(ctx: Context<JoinArena>, id: u64) -> Result<()> {
         instructions::join_arena::handler(ctx, id)
     }
+
+    pub fn start_arena(ctx: Context<StartArena>, id: u64) -> Result<()> {
+        instructions::start_arena::handler(ctx, id)
+    }
 }

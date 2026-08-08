@@ -26,4 +26,8 @@ pub mod glue {
     pub fn start_arena(ctx: Context<StartArena>, id: u64) -> Result<()> {
         instructions::start_arena::handler(ctx, id)
     }
+
+    pub fn delegate(ctx: Context<StartArena>, id: u64) -> Result<()> {
+        instructions::delegate::handler(ctx, id)
+    }
 }

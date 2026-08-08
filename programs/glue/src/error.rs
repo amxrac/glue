@@ -16,4 +16,6 @@ pub enum ArenaError {
     RandomnessNotReady,
     #[msg("Unable to find spawn position")]
     UnableToFindSpawnPosition,
+    #[msg("Arena not running")]
+    ArenaNotRunning,
 }

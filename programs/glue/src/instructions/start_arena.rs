@@ -113,7 +113,7 @@ impl<'info> StartArena<'info> {
         }
 
         self.arena_account.status = ArenaStatus::Running;
-
+        self.arena_account.max_ticks = 200;
         Ok(())
     }
 }

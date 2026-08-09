@@ -1,0 +1,10 @@
+[package]
+name = "keeper"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+tokio = { version = "1", features = ["full"] }
+anchor-lang = "0.32.1"
+anchor-client = { version = "0.32.1", features = ["async"] }

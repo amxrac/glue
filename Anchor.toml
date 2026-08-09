@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-glue = "F2k77ye35MiL7n5TZfe74fRPK1MmZiX3eAJBzEz2wMYm"
+glue = "EVh92BTdvhGSwQ2tx3wgZftuRfsP2oXfEcUmXoSwP9Hd"
 
 [provider]
 cluster = "localnet"

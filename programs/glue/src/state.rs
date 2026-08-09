@@ -56,3 +56,30 @@ pub const fn default_bot() -> Bot {
         active: false,
     }
 }
+
+pub fn coordinate_occupied(
+    arena: &ArenaAccount,
+    x: i16,
+    y: i16,
+    bot_count: usize,
+    resource_count: usize,
+    ignore_bot: Option<usize>,
+) -> bool {
+    for (index, bot) in arena.bots[..bot_count].iter().enumerate() {
+        if !bot.active || Some(index) == ignore_bot {
+            continue;
+        }
+
+        if bot.x == x && bot.y == y {
+            return true;
+        }
+    }
+
+    for resource in arena.resources[..resource_count].iter() {
+        if resource.active && resource.x == x && resource.y == y {
+            return true;
+        }
+    }
+
+    false
+}

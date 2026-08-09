@@ -18,4 +18,14 @@ pub enum ArenaError {
     UnableToFindSpawnPosition,
     #[msg("Arena not running")]
     ArenaNotRunning,
+    #[msg("Unauthorized Signer")]
+    UnauthorizedSigner,
+    #[msg("Game Over")]
+    GameOver,
+    #[msg("Counter Overflow")]
+    CounterOverflow,
+    #[msg("No Resource Slot")]
+    NoResourceSlot,
+    #[msg("No Valid Spawn Position")]
+    NoValidSpawnPosition,
 }

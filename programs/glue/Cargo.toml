@@ -22,8 +22,8 @@ custom-panic = []
 
 [dependencies]
 anchor-lang = "1.0.2"
-ephemeral-rollups-sdk = { features = ["anchor"] }
-ephemeral-vrf-sdk = { features = ["anchor"] }
+ephemeral-rollups-sdk = { version = "0.16.2", features = ["anchor", "vrf"] }
+solana-sha256-hasher = "3.1.0"
 
 
 [dev-dependencies]

@@ -1,15 +1,20 @@
 use anchor_lang::prelude::*;
-use ephemeral_vrf_sdk::anchor::vrf;
-use ephemeral_vrf_sdk::consts::DEFAULT_QUEUE;
-use ephemeral_vrf_sdk::instructions::{create_request_randomness_ix, RequestRandomnessParams};
-use ephemeral_vrf_sdk::types::SerializableAccountMeta;
+use ephemeral_rollups_sdk::{
+    anchor::vrf,
+    vrf::{
+        self,
+        instructions::{create_request_scoped_randomness_ix, RequestRandomnessParams},
+        types::SerializableAccountMeta,
+    },
+};
 
-use crate::{error::ArenaError, instruction::ConsumeRandomness, state::ArenaAccount, ArenaStatus};
+use crate::instruction::ConsumeRandomness;
+use crate::state::ArenaAccount;
 
 #[vrf]
 #[derive(Accounts)]
 #[instruction(id: u64)]
-pub struct RequestRandomness<'info> {
+pub struct RequestRandomnessCtx<'info> {
     #[account(mut)]
     pub host: Signer<'info>,
     #[account(
@@ -20,18 +25,25 @@ pub struct RequestRandomness<'info> {
     )]
     pub arena_account: Account<'info, ArenaAccount>,
     /// CHECK: Oracle queue for base-layer VRF
-    #[account(mut, address = DEFAULT_QUEUE)]
-    pub oracle_queue: AccountInfo<'info>,
+    #[account(
+        mut,
+        constraint =
+            oracle_queue.key() == vrf::consts::DEFAULT_QUEUE ||                // Devnet
+            oracle_queue.key() == vrf::consts::DEFAULT_TEST_QUEUE ||           // Local
+            oracle_queue.key() == vrf::consts::DEFAULT_EPHEMERAL_QUEUE ||      // ER Devnet
+            oracle_queue.key() == vrf::consts::DEFAULT_EPHEMERAL_TEST_QUEUE    // ER Local
+    )]
+    pub oracle_queue: UncheckedAccount<'info>,
 }
 
-impl<'info> RequestRandomness<'info> {
+impl<'info> RequestRandomnessCtx<'info> {
     pub fn request_randomness(&self, id: u64) -> Result<()> {
         msg!("Requesting VRF on base layer (id={})", id);
 
         let mut caller_seed = [0u8; 32];
         caller_seed[..8].copy_from_slice(&id.to_le_bytes());
 
-        let ix = create_request_randomness_ix(RequestRandomnessParams {
+        let ix = create_request_scoped_randomness_ix(RequestRandomnessParams {
             payer: self.host.key(),
             oracle_queue: self.oracle_queue.key(),
             callback_program_id: crate::ID,
@@ -53,7 +65,7 @@ impl<'info> RequestRandomness<'info> {
     }
 }
 
-pub fn handler(ctx: Context<RequestRandomness>, id: u64) -> Result<()> {
+pub fn handler(ctx: Context<RequestRandomnessCtx>, id: u64) -> Result<()> {
     ctx.accounts.request_randomness(id)?;
     Ok(())
 }

@@ -1,3 +1,4 @@
+pub mod advance_simulation;
 pub mod consume_randomness;
 pub mod delegate;
 pub mod init_arena;
@@ -5,6 +6,7 @@ pub mod join_arena;
 pub mod request_randomness;
 pub mod start_arena;
 
+pub use advance_simulation::*;
 pub use consume_randomness::*;
 pub use delegate::*;
 pub use init_arena::*;

@@ -9,6 +9,7 @@ use crate::{error::ArenaError, state::ArenaAccount, ArenaStatus};
 pub struct Delegate<'info> {
     #[account(mut)]
     pub host: Signer<'info>,
+    /// CHECK: Pda to be delegated
     #[account(
         mut,
         del,
@@ -19,24 +20,28 @@ pub struct Delegate<'info> {
         ],
         bump
     )]
-    pub arena_account: AccountInfo<'info>,
+    pub arena_account: UncheckedAccount<'info>,
     /// CHECK: Validator account supplied to the delegation program
     pub validator: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
 impl<'info> Delegate<'info> {
-    pub fn delegate(&mut self, id: u64) -> Result<()> {
+    pub fn delegate(&self, id: u64) -> Result<()> {
         let data = self.arena_account.try_borrow_data()?;
         let arena = ArenaAccount::try_deserialize(&mut &data[..])?;
-        require!(arena.host == self.host.key(), ArenaError::Unauthorized);
+        require!(
+            arena.host == self.host.key(),
+            ArenaError::UnauthorizedSigner
+        );
         require!(
             arena.status == ArenaStatus::Running,
             ArenaError::ArenaNotRunning
         );
         drop(data);
         let id_bytes = id.to_le_bytes();
-        let pda_seeds: &[&[u8]] = &[b"arena", self.host.key().as_ref(), &id_bytes];
+        let host_key = self.host.key();
+        let pda_seeds: &[&[u8]] = &[b"arena", host_key.as_ref(), &id_bytes];
 
         // Hand the arena_account PDA over to the Ephemeral Rollup
         self.delegate_arena_account(

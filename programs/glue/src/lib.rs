@@ -9,7 +9,7 @@ pub use constants::*;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("F2k77ye35MiL7n5TZfe74fRPK1MmZiX3eAJBzEz2wMYm");
+declare_id!("EVh92BTdvhGSwQ2tx3wgZftuRfsP2oXfEcUmXoSwP9Hd");
 
 #[program]
 pub mod glue {
@@ -27,7 +27,23 @@ pub mod glue {
         instructions::start_arena::handler(ctx, id)
     }
 
-    pub fn delegate(ctx: Context<StartArena>, id: u64) -> Result<()> {
+    pub fn request_randomness(ctx: Context<RequestRandomnessCtx>, id: u64) -> Result<()> {
+        instructions::request_randomness::handler(ctx, id)
+    }
+
+    pub fn consume_randomness(
+        ctx: Context<ConsumeRandomnessCtx>,
+        randomness: [u8; 32],
+    ) -> Result<()> {
+        instructions::consume_randomness::handler(ctx, randomness)
+    }
+
+    pub fn delegate(ctx: Context<Delegate>, id: u64) -> Result<()> {
         instructions::delegate::handler(ctx, id)
+    }
+
+    // happens inside ER
+    pub fn advance_simulation(ctx: Context<AdvanceSimulation>, id: u64) -> Result<()> {
+        instructions::advance_simulation::handler(ctx, id)
     }
 }

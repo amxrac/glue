@@ -46,4 +46,8 @@ pub mod glue {
     pub fn advance_simulation(ctx: Context<AdvanceSimulation>, id: u64) -> Result<()> {
         instructions::advance_simulation::handler(ctx, id)
     }
+
+    pub fn upgrade_bot(ctx: Context<UpgradeBot>, upgrade: UpgradeType) -> Result<()> {
+        instructions::upgrade_bot::handler(ctx, upgrade)
+    }
 }

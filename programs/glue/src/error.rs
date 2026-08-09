@@ -28,4 +28,10 @@ pub enum ArenaError {
     NoResourceSlot,
     #[msg("No Valid Spawn Position")]
     NoValidSpawnPosition,
+    #[msg("Player is not in this arena")]
+    PlayerNotInArena,
+    #[msg("Not enough credits")]
+    InsufficientCredits,
+    #[msg("Upgrade would overflow")]
+    UpgradeOverflow,
 }

@@ -44,6 +44,13 @@ pub struct Resource {
     pub active: bool,
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
+pub enum UpgradeType {
+    Speed,
+    Vision,
+    CarryCapacity,
+}
+
 pub const fn default_bot() -> Bot {
     Bot {
         x: 0,

@@ -35,7 +35,7 @@ impl<'info> InitArena<'info> {
             spawn_counter: 0,
             resources: [Resource::default(); 20],
             tick: 0,
-            max_ticks: 0,
+            max_ticks: 200,
             bump: bumps.arena_account,
         });
 

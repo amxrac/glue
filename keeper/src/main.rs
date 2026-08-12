@@ -73,7 +73,7 @@ async fn main() -> anyhow::Result<()> {
 
         println!("Transaction: {signature}");
 
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_millis(100)).await;
     }
     Ok(())
 }

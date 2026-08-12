@@ -18,7 +18,7 @@ pub struct ArenaAccount {
     pub bump: u8,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, PartialEq, Eq, Debug)]
 pub enum ArenaStatus {
     Waiting,
     Running,

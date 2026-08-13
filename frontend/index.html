@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Autonomous Arena</title>
+
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>Autonomous Arena</h1>
+        <p>MagicBlock Ephemeral Rollup</p>
+      </div>
+
+      <div id="status" class="status">
+        CONNECTING
+      </div>
+    </header>
+
+    <section class="stats">
+      <div>
+        <span>Tick</span>
+        <strong id="tick">—</strong>
+      </div>
+
+      <div>
+        <span>Players</span>
+        <strong id="players">—</strong>
+      </div>
+
+      <div>
+        <span>Resources</span>
+        <strong id="resources">—</strong>
+      </div>
+    </section>
+
+    <canvas id="arena"></canvas>
+
+    <p id="error"></p>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

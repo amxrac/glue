@@ -17,4 +17,4 @@ pub const CARRY_CAPACITY_UPGRADE_COST: u64 = 10;
 pub const SPEED_UPGRADE_AMOUNT: u16 = 1;
 pub const VISION_UPGRADE_AMOUNT: u16 = 1;
 pub const CARRY_CAPACITY_UPGRADE_AMOUNT: u16 = 1;
-pub const KEEPER_PUBKEY: Pubkey = pubkey!("6hdhdfhmkbB4GENUkYkNrcnQq8NEsuc2gVu2S2vRZYL");
+pub const KEEPER_PUBKEY: Pubkey = pubkey!("6F1ieXtPmkbB4GENUkYkNrcnQq8NEsuc2gVu2S2vRZYL");

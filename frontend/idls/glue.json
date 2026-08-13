@@ -1,0 +1,878 @@
+{
+  "address": "EVh92BTdvhGSwQ2tx3wgZftuRfsP2oXfEcUmXoSwP9Hd",
+  "metadata": {
+    "name": "glue",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "advance_simulation",
+      "discriminator": [
+        246,
+        108,
+        63,
+        30,
+        207,
+        73,
+        11,
+        84
+      ],
+      "accounts": [
+        {
+          "name": "keeper",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "consume_randomness",
+      "discriminator": [
+        190,
+        217,
+        49,
+        162,
+        99,
+        26,
+        73,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "vrf_program_identity",
+          "signer": true,
+          "address": "9irBy75QS2BN81FUgXuHcjqceJJRuc9oDkAe8TKVvvAw"
+        },
+        {
+          "name": "arena_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "randomness",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "delegate",
+      "discriminator": [
+        90,
+        147,
+        75,
+        178,
+        85,
+        88,
+        4,
+        137
+      ],
+      "accounts": [
+        {
+          "name": "host",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "buffer_arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                200,
+                129,
+                147,
+                195,
+                42,
+                17,
+                148,
+                95,
+                41,
+                229,
+                205,
+                18,
+                174,
+                8,
+                125,
+                192,
+                17,
+                222,
+                185,
+                247,
+                51,
+                226,
+                108,
+                68,
+                248,
+                191,
+                3,
+                58,
+                219,
+                35,
+                162,
+                212
+              ]
+            }
+          }
+        },
+        {
+          "name": "delegation_record_arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "delegation_metadata_arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "host"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "validator"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "owner_program",
+          "address": "EVh92BTdvhGSwQ2tx3wgZftuRfsP2oXfEcUmXoSwP9Hd"
+        },
+        {
+          "name": "delegation_program",
+          "address": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_arena",
+      "discriminator": [
+        24,
+        246,
+        252,
+        176,
+        155,
+        175,
+        123,
+        124
+      ],
+      "accounts": [
+        {
+          "name": "host",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "host"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "join_arena",
+      "discriminator": [
+        135,
+        217,
+        203,
+        200,
+        93,
+        181,
+        131,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "signer": true
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "request_randomness",
+      "discriminator": [
+        213,
+        5,
+        173,
+        166,
+        37,
+        236,
+        31,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "host",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "arena_account"
+          ]
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle_queue",
+          "writable": true
+        },
+        {
+          "name": "program_identity",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  100,
+                  101,
+                  110,
+                  116,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vrf_program",
+          "address": "Vrf1RNUjXmQGjmQrQLvJHs9SNkvDJEsRVFPkfSQUwGz"
+        },
+        {
+          "name": "slot_hashes",
+          "address": "SysvarS1otHashes111111111111111111111111111"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "start_arena",
+      "discriminator": [
+        76,
+        99,
+        3,
+        235,
+        111,
+        167,
+        248,
+        5
+      ],
+      "accounts": [
+        {
+          "name": "host",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "arena_account"
+          ]
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "upgrade_bot",
+      "discriminator": [
+        42,
+        187,
+        84,
+        116,
+        40,
+        236,
+        218,
+        134
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "signer": true
+        },
+        {
+          "name": "arena_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "upgrade",
+          "type": {
+            "defined": {
+              "name": "UpgradeType"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ArenaAccount",
+      "discriminator": [
+        83,
+        227,
+        135,
+        58,
+        80,
+        196,
+        10,
+        188
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidArena",
+      "msg": "Invalid Arena"
+    },
+    {
+      "code": 6001,
+      "name": "ArenaFull",
+      "msg": "Arena full"
+    },
+    {
+      "code": 6002,
+      "name": "ArenaNotFull",
+      "msg": "Arena not full"
+    },
+    {
+      "code": 6003,
+      "name": "PlayerAlreadyInArena",
+      "msg": "Player already in Arena"
+    },
+    {
+      "code": 6004,
+      "name": "ArenaNotJoinable",
+      "msg": "Arena not joinable"
+    },
+    {
+      "code": 6005,
+      "name": "RandomnessNotReady",
+      "msg": "Randomness not ready"
+    },
+    {
+      "code": 6006,
+      "name": "UnableToFindSpawnPosition",
+      "msg": "Unable to find spawn position"
+    },
+    {
+      "code": 6007,
+      "name": "ArenaNotRunning",
+      "msg": "Arena not running"
+    },
+    {
+      "code": 6008,
+      "name": "UnauthorizedSigner",
+      "msg": "Unauthorized Signer"
+    },
+    {
+      "code": 6009,
+      "name": "GameOver",
+      "msg": "Game Over"
+    },
+    {
+      "code": 6010,
+      "name": "CounterOverflow",
+      "msg": "Counter Overflow"
+    },
+    {
+      "code": 6011,
+      "name": "NoResourceSlot",
+      "msg": "No Resource Slot"
+    },
+    {
+      "code": 6012,
+      "name": "NoValidSpawnPosition",
+      "msg": "No Valid Spawn Position"
+    },
+    {
+      "code": 6013,
+      "name": "PlayerNotInArena",
+      "msg": "Player is not in this arena"
+    },
+    {
+      "code": 6014,
+      "name": "InsufficientCredits",
+      "msg": "Not enough credits"
+    },
+    {
+      "code": 6015,
+      "name": "UpgradeOverflow",
+      "msg": "Upgrade would overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "ArenaAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "host",
+            "type": "pubkey"
+          },
+          {
+            "name": "players",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "bots",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "Bot"
+                  }
+                },
+                6
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "ArenaStatus"
+              }
+            }
+          },
+          {
+            "name": "vrf_seed",
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
+            "name": "spawn_counter",
+            "type": "u32"
+          },
+          {
+            "name": "resources",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "Resource"
+                  }
+                },
+                20
+              ]
+            }
+          },
+          {
+            "name": "tick",
+            "type": "u64"
+          },
+          {
+            "name": "max_ticks",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArenaStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Waiting"
+          },
+          {
+            "name": "Running"
+          },
+          {
+            "name": "Finished"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Bot",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "x",
+            "type": "i16"
+          },
+          {
+            "name": "y",
+            "type": "i16"
+          },
+          {
+            "name": "vision",
+            "type": "u16"
+          },
+          {
+            "name": "speed",
+            "type": "u16"
+          },
+          {
+            "name": "score",
+            "type": "u64"
+          },
+          {
+            "name": "credits",
+            "type": "u64"
+          },
+          {
+            "name": "carry_capacity",
+            "type": "u16"
+          },
+          {
+            "name": "active",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Resource",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "x",
+            "type": "i16"
+          },
+          {
+            "name": "y",
+            "type": "i16"
+          },
+          {
+            "name": "active",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UpgradeType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Speed"
+          },
+          {
+            "name": "Vision"
+          },
+          {
+            "name": "CarryCapacity"
+          }
+        ]
+      }
+    }
+  ],
+  "constants": [
+    {
+      "name": "STARTING_CREDITS",
+      "type": "u64",
+      "value": "100"
+    }
+  ]
+}

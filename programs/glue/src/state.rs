@@ -33,7 +33,6 @@ pub struct Bot {
     pub speed: u16,
     pub score: u64,
     pub credits: u64,
-    pub carry_capacity: u16,
     pub active: bool,
 }
 
@@ -48,7 +47,6 @@ pub struct Resource {
 pub enum UpgradeType {
     Speed,
     Vision,
-    CarryCapacity,
 }
 
 pub const fn default_bot() -> Bot {
@@ -59,7 +57,6 @@ pub const fn default_bot() -> Bot {
         speed: DEFAULT_SPEED,
         score: 0,
         credits: STARTING_CREDITS,
-        carry_capacity: DEFAULT_CARRY_CAPACITY,
         active: false,
     }
 }
@@ -89,4 +86,11 @@ pub fn coordinate_occupied(
     }
 
     false
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize)]
+pub struct ScheduleAdvanceArgs {
+    pub task_id: i64,
+    pub execution_interval_millis: i64,
+    pub iterations: i64,
 }

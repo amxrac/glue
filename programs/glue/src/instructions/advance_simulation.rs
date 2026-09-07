@@ -220,7 +220,7 @@ impl<'info> AdvanceSimulation<'info> {
         }
 
         let Some((x, y, counter)) = found else {
-            return Err(ArenaError::NoValidSpawnPosition.into());
+            return Ok(());
         };
 
         self.arena_account.resources[index] = Resource { x, y, active: true };

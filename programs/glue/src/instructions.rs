@@ -4,6 +4,7 @@ pub mod delegate;
 pub mod init_arena;
 pub mod join_arena;
 pub mod request_randomness;
+pub mod schedule_advance;
 pub mod start_arena;
 pub mod upgrade_bot;
 
@@ -13,5 +14,6 @@ pub use delegate::*;
 pub use init_arena::*;
 pub use join_arena::*;
 pub use request_randomness::*;
+pub use schedule_advance::*;
 pub use start_arena::*;
 pub use upgrade_bot::*;

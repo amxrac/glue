@@ -27,10 +27,9 @@ impl<'info> StartArena<'info> {
         );
 
         require!(
-            self.arena_account.players.len() == 6,
-            ArenaError::ArenaNotFull
+            self.arena_account.players.len() >= 2,
+            ArenaError::NotEnoughPlayers
         );
-
         let vrf_seed = self
             .arena_account
             .vrf_seed

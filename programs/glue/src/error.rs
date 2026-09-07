@@ -6,8 +6,8 @@ pub enum ArenaError {
     InvalidArena,
     #[msg("Arena full")]
     ArenaFull,
-    #[msg("Arena not full")]
-    ArenaNotFull,
+    #[msg("Not Enough Players")]
+    NotEnoughPlayers,
     #[msg("Player already in Arena")]
     PlayerAlreadyInArena,
     #[msg("Arena not joinable")]

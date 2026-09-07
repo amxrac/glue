@@ -42,12 +42,20 @@ pub mod glue {
         instructions::delegate::handler(ctx, id)
     }
 
+    pub fn schedule_advance(
+        ctx: Context<ScheduleAdvance>,
+        id: u64,
+        args: ScheduleAdvanceArgs,
+    ) -> Result<()> {
+        instructions::schedule_advance::handler(ctx, id, args)
+    }
+
     // happens inside ER
     pub fn advance_simulation(ctx: Context<AdvanceSimulation>, id: u64) -> Result<()> {
         instructions::advance_simulation::handler(ctx, id)
     }
 
-    pub fn upgrade_bot(ctx: Context<UpgradeBot>, upgrade: UpgradeType) -> Result<()> {
-        instructions::upgrade_bot::handler(ctx, upgrade)
+    pub fn upgrade_bot(ctx: Context<UpgradeBot>, id: u64, upgrade: UpgradeType) -> Result<()> {
+        instructions::upgrade_bot::handler(ctx, id, upgrade)
     }
 }

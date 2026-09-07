@@ -3,11 +3,13 @@ use crate::{error::ArenaError, state::*};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
+#[instruction(id: u64)]
 pub struct UpgradeBot<'info> {
     pub player: Signer<'info>,
-
     #[account(
             mut,
+            seeds = [b"arena", arena_account.host.key().as_ref(), &id.to_le_bytes()],
+            bump = arena_account.bump,
             constraint = arena_account.status == ArenaStatus::Running
                 @ ArenaError::ArenaNotRunning
         )]
@@ -55,27 +57,13 @@ impl<'info> UpgradeBot<'info> {
 
                 bot.credits -= VISION_UPGRADE_COST;
             }
-
-            UpgradeType::CarryCapacity => {
-                require!(
-                    bot.credits >= CARRY_CAPACITY_UPGRADE_COST,
-                    ArenaError::InsufficientCredits
-                );
-
-                bot.carry_capacity = bot
-                    .carry_capacity
-                    .checked_add(CARRY_CAPACITY_UPGRADE_AMOUNT)
-                    .ok_or(ArenaError::UpgradeOverflow)?;
-
-                bot.credits -= CARRY_CAPACITY_UPGRADE_COST;
-            }
         }
 
         Ok(())
     }
 }
 
-pub fn handler(ctx: Context<UpgradeBot>, upgrade: UpgradeType) -> Result<()> {
+pub fn handler(ctx: Context<UpgradeBot>, _id: u64, upgrade: UpgradeType) -> Result<()> {
     ctx.accounts.upgrade_bot(upgrade)?;
     Ok(())
 }

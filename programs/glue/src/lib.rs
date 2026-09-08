@@ -58,4 +58,8 @@ pub mod glue {
     pub fn upgrade_bot(ctx: Context<UpgradeBot>, id: u64, upgrade: UpgradeType) -> Result<()> {
         instructions::upgrade_bot::handler(ctx, id, upgrade)
     }
+
+    pub fn claim_prize(ctx: Context<ClaimPrize>, id: u64) -> Result<()> {
+        instructions::claim_prize::handler(ctx, id)
+    }
 }

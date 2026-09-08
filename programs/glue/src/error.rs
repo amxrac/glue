@@ -38,4 +38,8 @@ pub enum ArenaError {
     EntryFeeError,
     #[msg("No Active Bots")]
     NoActiveBots,
+    #[msg("Arena Not Finished")]
+    ArenaNotFinished,
+    #[msg("Prize Already Claimed")]
+    PrizeAlreadyClaimed,
 }

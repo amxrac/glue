@@ -50,6 +50,7 @@ impl<'info> InitArena<'info> {
             max_ticks: 200,
             entry_fee,
             winner: None,
+            prize_claimed: false,
             bump: bumps.arena_account,
         });
 

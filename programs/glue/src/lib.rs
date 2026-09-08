@@ -15,8 +15,8 @@ declare_id!("EVh92BTdvhGSwQ2tx3wgZftuRfsP2oXfEcUmXoSwP9Hd");
 pub mod glue {
     use super::*;
 
-    pub fn init_arena(ctx: Context<InitArena>, id: u64) -> Result<()> {
-        instructions::init_arena::handler(ctx, id)
+    pub fn init_arena(ctx: Context<InitArena>, id: u64, entry_fee: u64) -> Result<()> {
+        instructions::init_arena::handler(ctx, id, entry_fee)
     }
 
     pub fn join_arena(ctx: Context<JoinArena>, id: u64) -> Result<()> {

@@ -5,8 +5,9 @@ use anchor_lang::solana_program::{
     program::invoke_signed,
 };
 use bincode;
-use ephemeral_rollups_sdk::crank::ScheduleCrankCpi;
+use ephemeral_rollups_sdk::consts::MAGIC_PROGRAM_ID;
 use magicblock_magic_program_api::args::ScheduleTaskArgs;
+use magicblock_magic_program_api::instruction::MagicBlockInstruction;
 
 #[derive(Accounts)]
 #[instruction(id: u64)]

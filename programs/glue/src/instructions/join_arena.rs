@@ -2,10 +2,12 @@ use std::vec;
 
 use crate::{error::ArenaError, state::ArenaAccount, ArenaStatus};
 use anchor_lang::prelude::*;
+use anchor_lang::system_program::{transfer, Transfer};
 
 #[derive(Accounts)]
 #[instruction(id: u64)]
 pub struct JoinArena<'info> {
+    #[account(mut)]
     pub player: Signer<'info>,
     #[account(
         mut,
@@ -13,6 +15,7 @@ pub struct JoinArena<'info> {
         bump = arena_account.bump
     )]
     pub arena_account: Account<'info, ArenaAccount>,
+    pub system_program: Program<'info, System>,
 }
 
 impl<'info> JoinArena<'info> {
@@ -26,6 +29,15 @@ impl<'info> JoinArena<'info> {
             !self.arena_account.players.contains(&self.player.key()),
             ArenaError::PlayerAlreadyInArena
         );
+
+        let cpi_accounts = Transfer {
+            from: self.player.to_account_info(),
+            to: self.arena_account.to_account_info(),
+        };
+
+        let cpi_ctx = CpiContext::new(self.system_program.key(), cpi_accounts);
+
+        transfer(cpi_ctx, self.arena_account.entry_fee)?;
 
         let slot = self.arena_account.players.len();
         self.arena_account.players.push(self.player.key());

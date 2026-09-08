@@ -34,4 +34,8 @@ pub enum ArenaError {
     InsufficientCredits,
     #[msg("Upgrade would overflow")]
     UpgradeOverflow,
+    #[msg("Entry fee must be greater than 0")]
+    EntryFeeError,
+    #[msg("No Active Bots")]
+    NoActiveBots,
 }

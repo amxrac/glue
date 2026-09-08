@@ -235,6 +235,18 @@ impl<'info> AdvanceSimulation<'info> {
         if self.arena_account.tick >= self.arena_account.max_ticks {
             self.arena_account.status = ArenaStatus::Finished;
 
+            let winner_idx = self
+                .arena_account
+                .bots
+                .iter()
+                .enumerate()
+                .filter(|(i, b)| b.active && *i < self.arena_account.players.len())
+                .max_by_key(|(i, b)| (b.score, std::cmp::Reverse(*i)))
+                .map(|(i, _)| i)
+                .ok_or(ArenaError::NoActiveBots)?;
+
+            self.arena_account.winner = Some(self.arena_account.players[winner_idx]);
+
             self.arena_account.exit(&crate::ID)?;
             MagicIntentBundleBuilder::new(
                 self.keeper.to_account_info(),

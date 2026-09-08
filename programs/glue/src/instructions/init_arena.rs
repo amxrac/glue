@@ -1,7 +1,9 @@
 use std::vec;
 
-use crate::{state::*, Resource};
+use crate::{error::*, state::*, Resource};
+use anchor_lang::context::CpiContext;
 use anchor_lang::prelude::*;
+use anchor_lang::system_program::{transfer, Transfer};
 
 #[derive(Accounts)]
 #[instruction(id: u64)]
@@ -20,7 +22,17 @@ pub struct InitArena<'info> {
 }
 
 impl<'info> InitArena<'info> {
-    pub fn init_arena(&mut self, id: u64, bumps: &InitArenaBumps) -> Result<()> {
+    pub fn init_arena(&mut self, id: u64, entry_fee: u64, bumps: &InitArenaBumps) -> Result<()> {
+        require!(entry_fee > 0, ArenaError::EntryFeeError);
+        let cpi_accounts = Transfer {
+            from: self.host.to_account_info(),
+            to: self.arena_account.to_account_info(),
+        };
+
+        let cpi_ctx = CpiContext::new(self.system_program.key(), cpi_accounts);
+
+        transfer(cpi_ctx, entry_fee)?;
+
         self.arena_account.set_inner(ArenaAccount {
             id,
             host: self.host.key(),
@@ -36,6 +48,8 @@ impl<'info> InitArena<'info> {
             resources: [Resource::default(); 20],
             tick: 0,
             max_ticks: 200,
+            entry_fee,
+            winner: None,
             bump: bumps.arena_account,
         });
 
@@ -43,7 +57,7 @@ impl<'info> InitArena<'info> {
     }
 }
 
-pub fn handler(ctx: Context<InitArena>, id: u64) -> Result<()> {
-    ctx.accounts.init_arena(id, &ctx.bumps)?;
+pub fn handler(ctx: Context<InitArena>, id: u64, entry_fee: u64) -> Result<()> {
+    ctx.accounts.init_arena(id, entry_fee, &ctx.bumps)?;
     Ok(())
 }

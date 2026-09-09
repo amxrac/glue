@@ -1,23 +1,17 @@
 use anchor_lang::prelude::*;
-use ephemeral_rollups_sdk::ephem::FoldableIntentBuilder;
-use ephemeral_rollups_sdk::{anchor::commit, ephem::MagicIntentBundleBuilder};
 use solana_sha256_hasher::hashv;
 
 use crate::constants::*;
 use crate::state::coordinate_occupied;
 use crate::{error::ArenaError, state::*};
 
-#[commit]
 #[derive(Accounts)]
 #[instruction(id: u64)]
 pub struct AdvanceSimulation<'info> {
-    #[account(mut)]
-    pub keeper: Signer<'info>,
     #[account(
         mut,
         seeds = [b"arena", arena_account.host.key().as_ref(), &id.to_le_bytes()],
         bump = arena_account.bump,
-        constraint = keeper.key() == KEEPER_PUBKEY @ ArenaError::UnauthorizedSigner
     )]
     pub arena_account: Account<'info, ArenaAccount>,
 }
@@ -32,17 +26,6 @@ impl<'info> AdvanceSimulation<'info> {
 
         if self.arena_account.status == ArenaStatus::Finished {
             return Ok(());
-        }
-
-        if self.arena_account.tick % COMMIT_INTERVAL == 0 {
-            self.arena_account.exit(&crate::ID)?;
-            MagicIntentBundleBuilder::new(
-                self.keeper.to_account_info(),
-                self.magic_context.to_account_info(),
-                self.magic_program.to_account_info(),
-            )
-            .commit(&[self.arena_account.to_account_info()])
-            .build_and_invoke()?;
         }
 
         Ok(())
@@ -246,15 +229,6 @@ impl<'info> AdvanceSimulation<'info> {
                 .ok_or(ArenaError::NoActiveBots)?;
 
             self.arena_account.winner = Some(self.arena_account.players[winner_idx]);
-
-            self.arena_account.exit(&crate::ID)?;
-            MagicIntentBundleBuilder::new(
-                self.keeper.to_account_info(),
-                self.magic_context.to_account_info(),
-                self.magic_program.to_account_info(),
-            )
-            .commit_and_undelegate(&[self.arena_account.to_account_info()])
-            .build_and_invoke()?;
         }
 
         Ok(())

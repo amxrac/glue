@@ -1,6 +1,6 @@
 use crate::constants::*;
 use crate::state::coordinate_occupied;
-use crate::{error::ArenaError, state::ArenaAccount, ArenaStatus, Resource};
+use crate::{error::ArenaError, state::*};
 use anchor_lang::prelude::*;
 use solana_sha256_hasher::hashv;
 use std::vec;

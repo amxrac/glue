@@ -42,4 +42,12 @@ pub enum ArenaError {
     ArenaNotFinished,
     #[msg("Prize Already Claimed")]
     PrizeAlreadyClaimed,
+    #[msg("Arena Not Cancellable")]
+    ArenaNotCancellable,
+    #[msg("Arena Not Cancellable")]
+    NotWinner,
+    #[msg("Invalid Refund Account")]
+    InvalidRefundAccount,
+    #[msg("Missing Refund Account")]
+    MissingRefundAccounts,
 }

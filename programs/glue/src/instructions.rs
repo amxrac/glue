@@ -1,4 +1,5 @@
 pub mod advance_simulation;
+pub mod cancel_arena;
 pub mod claim_prize;
 pub mod consume_randomness;
 pub mod delegate;
@@ -10,6 +11,7 @@ pub mod start_arena;
 pub mod upgrade_bot;
 
 pub use advance_simulation::*;
+pub use cancel_arena::*;
 pub use claim_prize::*;
 pub use consume_randomness::*;
 pub use delegate::*;

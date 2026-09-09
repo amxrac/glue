@@ -61,6 +61,14 @@ pub mod glue {
         instructions::upgrade_bot::handler(ctx, id, upgrade)
     }
 
+    pub fn settle_arena(ctx: Context<SettleArena>, id: u64) -> Result<()> {
+        instructions::settle_arena::handler(ctx, id)
+    }
+
+    pub fn cancel_arena<'info>(ctx: Context<'info, CancelArena<'info>>, id: u64) -> Result<()> {
+        instructions::cancel_arena::handler(ctx, id)
+    }
+
     pub fn claim_prize(ctx: Context<ClaimPrize>, id: u64) -> Result<()> {
         instructions::claim_prize::handler(ctx, id)
     }

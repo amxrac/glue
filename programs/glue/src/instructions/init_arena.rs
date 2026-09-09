@@ -47,7 +47,7 @@ impl<'info> InitArena<'info> {
             spawn_counter: 0,
             resources: [Resource::default(); 20],
             tick: 0,
-            max_ticks: 200,
+            max_ticks: 60,
             entry_fee,
             winner: None,
             bump: bumps.arena_account,

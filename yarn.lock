@@ -37,6 +37,38 @@
   resolved "https://registry.npmjs.org/@babel/runtime/-/runtime-7.29.7.tgz"
   integrity sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==
 
+"@coral-xyz/anchor-errors@^0.31.1":
+  version "0.31.1"
+  resolved "https://registry.npmjs.org/@coral-xyz/anchor-errors/-/anchor-errors-0.31.1.tgz"
+  integrity sha512-NhNEku4F3zzUSBtrYz84FzYWm48+9OvmT1Hhnwr6GnPQry2dsEqH/ti/7ASjjpoFTWRnPXrjAIT1qM6Isop+LQ==
+
+"@coral-xyz/anchor@^0.32.1":
+  version "0.32.1"
+  resolved "https://registry.npmjs.org/@coral-xyz/anchor/-/anchor-0.32.1.tgz"
+  integrity sha512-zAyxFtfeje2FbMA1wzgcdVs7Hng/MijPKpRijoySPCicnvcTQs/+dnPZ/cR+LcXM9v9UYSyW81uRNYZtN5G4yg==
+  dependencies:
+    "@coral-xyz/anchor-errors" "^0.31.1"
+    "@coral-xyz/borsh" "^0.31.1"
+    "@noble/hashes" "^1.3.1"
+    "@solana/web3.js" "^1.69.0"
+    bn.js "^5.1.2"
+    bs58 "^4.0.1"
+    buffer-layout "^1.2.2"
+    camelcase "^6.3.0"
+    cross-fetch "^3.1.5"
+    eventemitter3 "^4.0.7"
+    pako "^2.0.3"
+    superstruct "^0.15.4"
+    toml "^3.0.0"
+
+"@coral-xyz/borsh@^0.31.1":
+  version "0.31.1"
+  resolved "https://registry.npmjs.org/@coral-xyz/borsh/-/borsh-0.31.1.tgz"
+  integrity sha512-9N8AU9F0ubriKfNE3g1WF0/4dtlGXoBN/hd1PvbNBamBNwRgHxH4P+o3Zt7rSEloW1HUs6LfZEchlx9fW7POYw==
+  dependencies:
+    bn.js "^5.1.2"
+    buffer-layout "^1.2.0"
+
 "@noble/curves@^1.4.2":
   version "1.9.7"
   resolved "https://registry.npmjs.org/@noble/curves/-/curves-1.9.7.tgz"
@@ -79,7 +111,7 @@
     chalk "^5.4.1"
     commander "^14.0.0"
 
-"@solana/web3.js@^1.69.1", "@solana/web3.js@^1.98.4":
+"@solana/web3.js@^1.69.0", "@solana/web3.js@^1.69.1", "@solana/web3.js@^1.98.4":
   version "1.98.4"
   resolved "https://registry.npmjs.org/@solana/web3.js/-/web3.js-1.98.4.tgz"
   integrity sha512-vv9lfnvjUsRiq//+j5pBdXig0IQdtzA0BRZ3bXEP4KaIyF1CcaydWqgyzQgfZMNIsWNWmG+AUHwPy4AHOD6gpw==
@@ -236,7 +268,7 @@ binary-extensions@^2.0.0:
   resolved "https://registry.npmjs.org/binary-extensions/-/binary-extensions-2.3.0.tgz"
   integrity sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==
 
-bn.js@^5.2.0, bn.js@^5.2.1, bn.js@^5.2.3:
+bn.js@^5.1.2, bn.js@^5.2.0, bn.js@^5.2.1, bn.js@^5.2.3:
   version "5.2.5"
   resolved "https://registry.npmjs.org/bn.js/-/bn.js-5.2.5.tgz"
   integrity sha512-Vq886eXykuP5E6HcKSSStP3bJgrE6In5WKxVUvJ8XGpWWYs2xZHWqUwzCtGgEtBcxyd57KBFDPFoUfNzdaHCNg==
@@ -295,7 +327,7 @@ buffer@^6.0.3, buffer@~6.0.3, buffer@6.0.3:
     base64-js "^1.3.1"
     ieee754 "^1.2.1"
 
-camelcase@^6.0.0:
+camelcase@^6.0.0, camelcase@^6.3.0:
   version "6.3.0"
   resolved "https://registry.npmjs.org/camelcase/-/camelcase-6.3.0.tgz"
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
@@ -383,6 +415,13 @@ concat-map@0.0.1:
   version "0.0.1"
   resolved "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz"
   integrity sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==
+
+cross-fetch@^3.1.5:
+  version "3.2.0"
+  resolved "https://registry.npmjs.org/cross-fetch/-/cross-fetch-3.2.0.tgz"
+  integrity sha512-Q+xVJLoGOeIMXZmbUK4HYk+69cQH6LudR0Vu/pRm2YlU/hDV9CiS0gKUMaWY5f2NeUH9C1nV3bsTlCo0FsTV1Q==
+  dependencies:
+    node-fetch "^2.7.0"
 
 debug@4.3.3:
   version "4.3.3"

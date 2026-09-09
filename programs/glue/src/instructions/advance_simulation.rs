@@ -24,10 +24,6 @@ impl<'info> AdvanceSimulation<'info> {
         self.spawn_resources()?;
         self.finish_if_complete()?;
 
-        if self.arena_account.status == ArenaStatus::Finished {
-            return Ok(());
-        }
-
         Ok(())
     }
 

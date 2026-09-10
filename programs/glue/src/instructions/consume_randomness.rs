@@ -1,20 +1,11 @@
 use anchor_lang::prelude::*;
-use ephemeral_rollups_sdk::{
-    anchor::{vrf, vrf_callback},
-    vrf::{
-        self,
-        instructions::{create_request_scoped_randomness_ix, RequestRandomnessParams},
-        types::SerializableAccountMeta,
-    },
-};
+use ephemeral_rollups_sdk::anchor::vrf_callback;
 
-use crate::{error::ArenaError, state::ArenaAccount, ArenaStatus};
+use crate::state::ArenaAccount;
 
-#[derive(Accounts)]
 #[vrf_callback]
+#[derive(Accounts)]
 pub struct ConsumeRandomnessCtx<'info> {
-    #[account(address = ephemeral_rollups_sdk::vrf::consts::VRF_PROGRAM_IDENTITY)]
-    pub vrf_program_identity: Signer<'info>,
     #[account(mut)]
     pub arena_account: Account<'info, ArenaAccount>,
 }

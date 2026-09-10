@@ -59,7 +59,6 @@ impl<'info> RequestRandomnessCtx<'info> {
             ]),
             ..Default::default()
         });
-
         self.invoke_signed_vrf(&self.host.to_account_info(), &ix)?;
         Ok(())
     }

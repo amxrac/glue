@@ -21,8 +21,9 @@ const ORACLE_QUEUE = new PublicKey("Cuj97ggrhhidhbu39TijNVqE74xvKJ69gDervRUXAxGh
 const VALIDATOR = new PublicKey("MEUGGrYPxKk17hCr7wpT6s8dtNokZj5U2L57vjYMS8e");
 
 const ARENA_ID = new anchor.BN(Date.now() % 1_000_000);
+const CANCEL_ARENA_ID = ARENA_ID.addn(1);
 const ENTRY_FEE = new anchor.BN(0.01 * LAMPORTS_PER_SOL);
-const MAX_TICKS = 60;
+const MAX_TICKS = 550;
 
 const TASK_ID = new anchor.BN(1);
 const INTERVAL_MS = new anchor.BN(100);
@@ -82,11 +83,47 @@ function arenaPda(host: PublicKey, id: anchor.BN, programId: PublicKey) {
         SystemProgram.transfer({
           fromPubkey: host.publicKey,
           toPubkey: player2.publicKey,
-          lamports: ENTRY_FEE.toNumber() + 0.02 * LAMPORTS_PER_SOL,
+          lamports: ENTRY_FEE.toNumber() * 2 + 0.02 * LAMPORTS_PER_SOL,
         })
       )
     );
   console.log(`player2 funded: ${player2.publicKey.toBase58()}`);
+
+  {
+    const cancelPda = arenaPda(host.publicKey, CANCEL_ARENA_ID, PROGRAM_ID);
+
+    await programBase.methods
+      .initArena(CANCEL_ARENA_ID, ENTRY_FEE)
+      .accounts({ host: host.publicKey })
+      .rpc();
+
+    await programBase.methods
+      .joinArena(CANCEL_ARENA_ID)
+      .accountsPartial({ player: player2.publicKey, arenaAccount: cancelPda })
+      .signers([player2])
+      .rpc();
+
+    const p2Before = await connBase.getBalance(player2.publicKey);
+
+    await programBase.methods
+      .cancelArena(CANCEL_ARENA_ID)
+      .accountsPartial({ host: host.publicKey, arenaAccount: cancelPda })
+      .remainingAccounts([
+        { pubkey: host.publicKey, isWritable: true, isSigner: false },
+        { pubkey: player2.publicKey, isWritable: true, isSigner: false },
+      ])
+      .rpc();
+
+    const p2After = await connBase.getBalance(player2.publicKey);
+    const refunded = p2After - p2Before;
+    if (refunded !== ENTRY_FEE.toNumber()) {
+      throw new Error(`player2 refund wrong: got ${refunded}, want ${ENTRY_FEE.toNumber()}`);
+    }
+    if ((await connBase.getAccountInfo(cancelPda)) !== null) {
+      throw new Error("cancelled arena pda was not closed");
+    }
+    console.log(`cancel_arena ok — refunded ${refunded / LAMPORTS_PER_SOL} SOL to player2`);
+  }
 
   const slot0 = await connEr.getSlot();
   await sleep(1000);
@@ -209,10 +246,10 @@ function arenaPda(host: PublicKey, id: anchor.BN, programId: PublicKey) {
   if (post.bots[0].speed <= speedBefore) {
     throw new Error(`speed did not increase: ${speedBefore} -> ${post.bots[0].speed}`);
   }
-  console.log(`speed ${speedBefore} -> ${post.bots[0].speed}`);
+  // console.log(`speed ${speedBefore} -> ${post.bots[0].speed}`);
 
   const sigs = await connEr.getSignaturesForAddress(pda, { limit: 10 });
-  console.log(sigs.map(s => ({ sig: s.signature, err: s.err })));
+  // console.log(sigs.map(s => ({ sig: s.signature, err: s.err })));
    if (sigs.length) {
      const tx = await connEr.getTransaction(sigs[0].signature, {
        maxSupportedTransactionVersion: 0,

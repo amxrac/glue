@@ -23,12 +23,14 @@ export const MAX_TICKS = 550;
 export const TASK_ID = new anchor.BN(1);
 export const INTERVAL_MS = new anchor.BN(100);
 export const ITERATIONS = new anchor.BN(MAX_TICKS);
+export const PROGRAM_ID = new PublicKey((idl as Glue).address);
 
 export const connBase = new Connection(RPC_BASE, "confirmed");
 export const connEr = new Connection(RPC_ER, {
   wsEndpoint: RPC_ER.replace("http", "ws"),
   commitment: "confirmed",
 });
+
 export function arenaPda(host: PublicKey, id: anchor.BN, programId: PublicKey) {
   return PublicKey.findProgramAddressSync(
     [Buffer.from("arena"), host.toBuffer(), id.toArrayLike(Buffer, "le", 8)],
@@ -44,3 +46,5 @@ export function getPrograms(wallet: AnchorWallet) {
     programEr:   new Program<Glue>(idl as Glue, providerEr),
   };
 }
+export const readBase = new Program<Glue>(idl as Glue, { connection: connBase });
+export const readEr   = new Program<Glue>(idl as Glue, { connection: connEr });

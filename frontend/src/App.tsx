@@ -9,40 +9,41 @@ import {
   WalletMultiButton,
 } from "@solana/wallet-adapter-react-ui";
 import "@solana/wallet-adapter-react-ui/styles.css";
-import { RPC_BASE, getPrograms, ENTRY_FEE, arenaPda, PROGRAM_ID } from "./lib/anchor";
-import * as anchor from "@coral-xyz/anchor";
+import { RPC_BASE } from "./lib/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { useArena } from "./hooks/useArena";
 import { Arena } from "./screens/Arena";
+import { Lobby } from "./screens/Lobby";
 
 function Home() {
-  const [pda, setPda] = useState<PublicKey | null>(null);
-  const [arenaId, setArenaId] = useState<anchor.BN | null>(null);
+  const [pda, setPda] = useState<PublicKey | null>(() => {
+    const p = new URLSearchParams(location.search).get("arena");
+    return p ? new PublicKey(p) : null;
+  });
+  const [starting, setStarting] = useState(false);
 
   const wallet = useAnchorWallet();
+  const { arena } = useArena(pda);
 
-  const { arena, error } = useArena(pda);
   if (!wallet) return <WalletMultiButton />;
 
-  async function createArena() {
-    const { programBase } = getPrograms(wallet!);
-    const id = new anchor.BN(Date.now() % 1_000_000);
-    const sig = await programBase.methods
-      .initArena(id, ENTRY_FEE)
-      .accounts({ host: wallet!.publicKey })
-      .rpc();
-    setPda(arenaPda(wallet!.publicKey, id, PROGRAM_ID));
-    setArenaId(id);
-    console.log("arena", id.toString(), sig);
+  const status = arena ? Object.keys(arena.status)[0] : null;
+
+  if (status === "running" && !starting) {
+    return <Arena arena={arena} me={wallet.publicKey} />;
   }
 
   return (
     <div>
       <WalletMultiButton />
       <p>{wallet.publicKey.toBase58()}</p>
-      {!arena && <button onClick={createArena}>Create arena</button>}
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
-      {arena && <Arena arena={arena} me={wallet.publicKey} />}
+      <Lobby
+        arena={arena}
+        pda={pda}
+        wallet={wallet}
+        onCreated={setPda}
+        onStarting={setStarting}
+      />
     </div>
   );
 }

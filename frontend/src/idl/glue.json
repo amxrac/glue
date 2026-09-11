@@ -21,7 +21,111 @@
       ],
       "accounts": [
         {
-          "name": "keeper",
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancel_arena",
+      "discriminator": [
+        104,
+        161,
+        139,
+        47,
+        18,
+        111,
+        92,
+        43
+      ],
+      "accounts": [
+        {
+          "name": "host",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "arena_account"
+          ]
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "claim_prize",
+      "discriminator": [
+        157,
+        233,
+        139,
+        121,
+        246,
+        62,
+        234,
+        235
+      ],
+      "accounts": [
+        {
+          "name": "caller",
           "writable": true,
           "signer": true
         },
@@ -53,13 +157,12 @@
           }
         },
         {
-          "name": "magic_program",
-          "address": "Magic11111111111111111111111111111111111111"
+          "name": "winner",
+          "writable": true
         },
         {
-          "name": "magic_context",
-          "writable": true,
-          "address": "MagicContext1111111111111111111111111111111"
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -84,8 +187,11 @@
       "accounts": [
         {
           "name": "vrf_program_identity",
-          "signer": true,
-          "address": "9irBy75QS2BN81FUgXuHcjqceJJRuc9oDkAe8TKVvvAw"
+          "docs": [
+            "Scoped VRF identity PDA, bound to this program. Its presence as a signer proves",
+            "the callback was issued by the VRF program for this program."
+          ],
+          "signer": true
         },
         {
           "name": "arena_account",
@@ -355,6 +461,10 @@
         {
           "name": "id",
           "type": "u64"
+        },
+        {
+          "name": "entry_fee",
+          "type": "u64"
         }
       ]
     },
@@ -373,6 +483,7 @@
       "accounts": [
         {
           "name": "player",
+          "writable": true,
           "signer": true
         },
         {
@@ -401,12 +512,121 @@
               }
             ]
           }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
         {
           "name": "id",
           "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "process_undelegation",
+      "discriminator": [
+        196,
+        28,
+        41,
+        206,
+        48,
+        37,
+        51,
+        167
+      ],
+      "accounts": [
+        {
+          "name": "base_account",
+          "writable": true
+        },
+        {
+          "name": "buffer",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  110,
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  45,
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "base_account"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                181,
+                183,
+                0,
+                225,
+                242,
+                87,
+                58,
+                192,
+                204,
+                6,
+                34,
+                1,
+                52,
+                74,
+                207,
+                151,
+                184,
+                53,
+                6,
+                235,
+                140,
+                229,
+                25,
+                152,
+                204,
+                98,
+                126,
+                24,
+                147,
+                128,
+                167,
+                62
+              ]
+            }
+          }
+        },
+        {
+          "name": "payer",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "account_seeds",
+          "type": {
+            "vec": "bytes"
+          }
         }
       ]
     },
@@ -503,6 +723,137 @@
       ]
     },
     {
+      "name": "schedule_advance",
+      "discriminator": [
+        210,
+        107,
+        216,
+        24,
+        110,
+        197,
+        42,
+        77
+      ],
+      "accounts": [
+        {
+          "name": "magic_program"
+        },
+        {
+          "name": "host",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "host"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "program"
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        },
+        {
+          "name": "args",
+          "type": {
+            "defined": {
+              "name": "ScheduleAdvanceArgs"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "settle_arena",
+      "discriminator": [
+        222,
+        130,
+        112,
+        108,
+        20,
+        135,
+        200,
+        13
+      ],
+      "accounts": [
+        {
+          "name": "host",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "arena_account"
+          ]
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "start_arena",
       "discriminator": [
         76,
@@ -577,10 +928,37 @@
         },
         {
           "name": "arena_account",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
         }
       ],
       "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        },
         {
           "name": "upgrade",
           "type": {
@@ -607,6 +985,21 @@
       ]
     }
   ],
+  "events": [
+    {
+      "name": "ArenaSettled",
+      "discriminator": [
+        54,
+        201,
+        162,
+        154,
+        85,
+        183,
+        209,
+        60
+      ]
+    }
+  ],
   "errors": [
     {
       "code": 6000,
@@ -620,8 +1013,8 @@
     },
     {
       "code": 6002,
-      "name": "ArenaNotFull",
-      "msg": "Arena not full"
+      "name": "NotEnoughPlayers",
+      "msg": "Not Enough Players"
     },
     {
       "code": 6003,
@@ -687,6 +1080,46 @@
       "code": 6015,
       "name": "UpgradeOverflow",
       "msg": "Upgrade would overflow"
+    },
+    {
+      "code": 6016,
+      "name": "EntryFeeError",
+      "msg": "Entry fee must be greater than 0"
+    },
+    {
+      "code": 6017,
+      "name": "NoActiveBots",
+      "msg": "No Active Bots"
+    },
+    {
+      "code": 6018,
+      "name": "ArenaNotFinished",
+      "msg": "Arena Not Finished"
+    },
+    {
+      "code": 6019,
+      "name": "PrizeAlreadyClaimed",
+      "msg": "Prize Already Claimed"
+    },
+    {
+      "code": 6020,
+      "name": "ArenaNotCancellable",
+      "msg": "Arena Not Cancellable"
+    },
+    {
+      "code": 6021,
+      "name": "NotWinner",
+      "msg": "Arena Not Cancellable"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidRefundAccount",
+      "msg": "Invalid Refund Account"
+    },
+    {
+      "code": 6023,
+      "name": "MissingRefundAccounts",
+      "msg": "Missing Refund Account"
     }
   ],
   "types": [
@@ -767,8 +1200,42 @@
             "type": "u64"
           },
           {
+            "name": "entry_fee",
+            "type": "u64"
+          },
+          {
+            "name": "winner",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArenaSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena_id",
+            "type": "u64"
+          },
+          {
+            "name": "winner",
+            "type": "pubkey"
+          },
+          {
+            "name": "score",
+            "type": "u64"
+          },
+          {
+            "name": "payout",
+            "type": "u64"
           }
         ]
       }
@@ -820,10 +1287,6 @@
             "type": "u64"
           },
           {
-            "name": "carry_capacity",
-            "type": "u16"
-          },
-          {
             "name": "active",
             "type": "bool"
           }
@@ -851,6 +1314,26 @@
       }
     },
     {
+      "name": "ScheduleAdvanceArgs",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "task_id",
+            "type": "i64"
+          },
+          {
+            "name": "execution_interval_millis",
+            "type": "i64"
+          },
+          {
+            "name": "iterations",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "UpgradeType",
       "type": {
         "kind": "enum",
@@ -860,9 +1343,6 @@
           },
           {
             "name": "Vision"
-          },
-          {
-            "name": "CarryCapacity"
           }
         ]
       }

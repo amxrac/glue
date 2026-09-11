@@ -18,11 +18,11 @@ export const ORACLE_QUEUE = new PublicKey("Cuj97ggrhhidhbu39TijNVqE74xvKJ69gDerv
 export const VALIDATOR = new PublicKey("MEUGGrYPxKk17hCr7wpT6s8dtNokZj5U2L57vjYMS8e");
 
 export const ENTRY_FEE = new anchor.BN(0.01 * LAMPORTS_PER_SOL);
-export const MAX_TICKS = 550;
+// export const MAX_TICKS = 550; (commented out because the on chain value is used instead)
 
 export const TASK_ID = new anchor.BN(1);
 export const INTERVAL_MS = new anchor.BN(100);
-export const ITERATIONS = new anchor.BN(MAX_TICKS);
+// export const ITERATIONS = new anchor.BN(MAX_TICKS);
 export const PROGRAM_ID = new PublicKey((idl as Glue).address);
 
 export const connBase = new Connection(RPC_BASE, "confirmed");

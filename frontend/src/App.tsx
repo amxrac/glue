@@ -13,9 +13,11 @@ import { RPC_BASE, getPrograms, ENTRY_FEE, arenaPda, PROGRAM_ID } from "./lib/an
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { useArena } from "./hooks/useArena";
+import { Arena } from "./screens/Arena";
 
 function Home() {
   const [pda, setPda] = useState<PublicKey | null>(null);
+  const [arenaId, setArenaId] = useState<anchor.BN | null>(null);
 
   const wallet = useAnchorWallet();
 
@@ -30,6 +32,7 @@ function Home() {
       .accounts({ host: wallet!.publicKey })
       .rpc();
     setPda(arenaPda(wallet!.publicKey, id, PROGRAM_ID));
+    setArenaId(id);
     console.log("arena", id.toString(), sig);
   }
 
@@ -37,8 +40,9 @@ function Home() {
     <div>
       <WalletMultiButton />
       <p>{wallet.publicKey.toBase58()}</p>
-      <button onClick={createArena}>Create arena</button>
-      <pre>{error ?? JSON.stringify(arena, null, 2)}</pre>
+      {!arena && <button onClick={createArena}>Create arena</button>}
+      {error && <p style={{ color: "crimson" }}>{error}</p>}
+      {arena && <Arena arena={arena} me={wallet.publicKey} />}
     </div>
   );
 }

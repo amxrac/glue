@@ -9,7 +9,7 @@ import type { Glue } from "../idl/glue";
 import idl from "../idl/glue.json";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
 
-export const RPC_BASE = "https://api.devnet.solana.com";
+export const RPC_BASE = import.meta.env.VITE_HELIUS_RPC_URL;
 export const RPC_ER = "https://devnet-eu.magicblock.app";
 export const DELEGATION_PROGRAM = new PublicKey(
   "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
@@ -25,7 +25,10 @@ export const INTERVAL_MS = new anchor.BN(100);
 // export const ITERATIONS = new anchor.BN(MAX_TICKS);
 export const PROGRAM_ID = new PublicKey((idl as Glue).address);
 
-export const connBase = new Connection(RPC_BASE, "confirmed");
+export const connBase = new Connection(RPC_BASE, {
+  wsEndpoint: "wss://api.devnet.solana.com/",
+  commitment: "confirmed",
+});
 export const connEr = new Connection(RPC_ER, {
   wsEndpoint: RPC_ER.replace("http", "ws"),
   commitment: "confirmed",

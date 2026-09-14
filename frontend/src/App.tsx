@@ -14,6 +14,7 @@ import { PublicKey } from "@solana/web3.js";
 import { useArena } from "./hooks/useArena";
 import { Arena } from "./screens/Arena";
 import { Lobby } from "./screens/Lobby";
+import { Result } from "./screens/Result";
 
 function Home() {
   const [pda, setPda] = useState<PublicKey | null>(() => {
@@ -23,14 +24,40 @@ function Home() {
   const [starting, setStarting] = useState(false);
 
   const wallet = useAnchorWallet();
-  const { arena } = useArena(pda);
+  const { arena, error, closed } = useArena(pda, 1500);
 
   if (!wallet) return <WalletMultiButton />;
 
   const status = arena ? Object.keys(arena.status)[0] : null;
+  const box: React.CSSProperties = { maxWidth: 480, margin: "0 auto", padding: 12 };
+
+  function reset() {
+    history.replaceState(null, "", location.pathname);
+    setPda(null);
+  }
+
+  if (closed) {
+    return (
+      <div style={box}>
+        <p>Match complete — prize claimed and arena closed.</p>
+        <button onClick={reset}>New arena</button>
+      </div>
+    );
+  }
 
   if (status === "running" && !starting) {
     return <Arena arena={arena} me={wallet.publicKey} />;
+  }
+  if (status === "finished") {
+    return <Result arena={arena} pda={pda!} wallet={wallet} onDone={() => {}} />;
+  }
+  if (pda && !arena && error) {
+    return (
+      <div style={box}>
+        <p style={{ color: "crimson" }}>Can't reach the network. Retrying…</p>
+        <p style={{ fontSize: 12, opacity: 0.6 }}>{error}</p>
+      </div>
+    );
   }
 
   return (

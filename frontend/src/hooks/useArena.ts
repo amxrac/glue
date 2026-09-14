@@ -1,21 +1,28 @@
 import { useEffect, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
-import { readBase, readEr, connBase, DELEGATION_PROGRAM } from "../lib/anchor";
+import { readBase, readEr, connBase, PROGRAM_ID } from "../lib/anchor";
 
 export function useArena(pda: PublicKey | null, intervalMs = 400) {
   const [arena, setArena] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [closed, setClosed] = useState(false);
 
   const pdaKey = pda?.toBase58();
 
   useEffect(() => {
     if (!pda) return;
     let cancelled = false;
-
     const poll = async () => {
       try {
         const info = await connBase.getAccountInfo(pda);
-        const delegated = info !== null && info.owner.equals(DELEGATION_PROGRAM);
+
+        if (info === null) {
+          if (!cancelled) { setClosed(true); setArena(null); setError(null); }
+          return;
+        }
+
+        if (!cancelled) setClosed(false);
+        const delegated = !info.owner.equals(PROGRAM_ID);
         const program = delegated ? readEr : readBase;
         const a = await program.account.arenaAccount.fetch(pda);
         if (cancelled) return;
@@ -32,11 +39,8 @@ export function useArena(pda: PublicKey | null, intervalMs = 400) {
     };
     loop();
 
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
+    return () => { cancelled = true; if (timer) clearTimeout(timer); };
   }, [pdaKey, intervalMs]);
 
-  return { arena, error };
+  return { arena, error, closed };
 }

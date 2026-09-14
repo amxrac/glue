@@ -7,24 +7,10 @@ import {
   ENTRY_FEE, PROGRAM_ID, ORACLE_QUEUE, VALIDATOR,
   DELEGATION_PROGRAM, TASK_ID, INTERVAL_MS,
 } from "../lib/anchor";
+import { waitFor } from "../lib/waitFor";
 
 const MAGIC_PROGRAM = new PublicKey("Magic11111111111111111111111111111111111111");
 
-async function waitFor(
-  label: string,
-  check: () => Promise<boolean>,
-  timeoutMs = 30_000,
-  intervalMs = 300
-): Promise<number> {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    try {
-      if (await check()) return Date.now() - start;
-    } catch { /* account not yet visible. expected during transitions */ }
-    await new Promise((r) => setTimeout(r, intervalMs));
-  }
-  throw new Error(`timeout waiting for ${label} after ${timeoutMs}ms`);
-}
 
 export function Lobby({
   arena, pda, wallet, onCreated, onStarting
@@ -56,7 +42,7 @@ export function Lobby({
     await programBase.methods
       .initArena(id, ENTRY_FEE)
       .accounts({ host: wallet.publicKey })
-      .rpc();
+      .rpc({ skipPreflight: true })
     const p = arenaPda(wallet.publicKey, id, PROGRAM_ID);
     history.replaceState(null, "", `?arena=${p.toBase58()}`);
     onCreated(p);

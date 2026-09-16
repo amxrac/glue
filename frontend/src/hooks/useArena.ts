@@ -5,28 +5,31 @@ import { readBase, readEr, connBase, PROGRAM_ID } from "../lib/anchor";
 export function useArena(pda: PublicKey | null, intervalMs = 400) {
   const [arena, setArena] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [closed, setClosed] = useState(false);
+  const [closedKey, setClosedKey] = useState<string | null>(null);
+  const [lastStatus, setLastStatus] = useState<string | null>(null);
 
   const pdaKey = pda?.toBase58();
 
   useEffect(() => {
     if (!pda) return;
     let cancelled = false;
+
     const poll = async () => {
       try {
         const info = await connBase.getAccountInfo(pda);
 
         if (info === null) {
-          if (!cancelled) { setClosed(true); setArena(null); setError(null); }
+          if (!cancelled) { setClosedKey(pda.toBase58()); setArena(null); setError(null); }
           return;
         }
 
-        if (!cancelled) setClosed(false);
         const delegated = !info.owner.equals(PROGRAM_ID);
         const program = delegated ? readEr : readBase;
         const a = await program.account.arenaAccount.fetch(pda);
         if (cancelled) return;
-        setArena(a); setError(null);
+        setArena(a);
+        setLastStatus(Object.keys(a.status)[0]);
+        setError(null);
       } catch (e) {
         if (!cancelled) setError(String(e));
       }
@@ -42,5 +45,12 @@ export function useArena(pda: PublicKey | null, intervalMs = 400) {
     return () => { cancelled = true; if (timer) clearTimeout(timer); };
   }, [pdaKey, intervalMs]);
 
-  return { arena, error, closed };
+  const closed = closedKey !== null && closedKey === pdaKey;
+
+  return {
+    arena: pdaKey ? arena : null,
+    error: pdaKey ? error : null,
+    closed,
+    lastStatus: pdaKey ? lastStatus : null,
+  };
 }

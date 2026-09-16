@@ -24,6 +24,8 @@ export const TASK_ID = new anchor.BN(1);
 export const INTERVAL_MS = new anchor.BN(100);
 // export const ITERATIONS = new anchor.BN(MAX_TICKS);
 export const PROGRAM_ID = new PublicKey((idl as Glue).address);
+export const MAP_WIDTH = 100;
+export const MAP_HEIGHT = 100;
 
 export const connBase = new Connection(RPC_BASE, {
   wsEndpoint: "wss://api.devnet.solana.com/",

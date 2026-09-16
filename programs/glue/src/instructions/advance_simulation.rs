@@ -78,8 +78,22 @@ impl<'info> AdvanceSimulation<'info> {
                 }
             }
 
-            let Some((target_x, target_y)) = target else {
-                continue;
+            let (target_x, target_y) = match target {
+                Some(t) => t,
+                None => {
+                    let seed = self
+                        .arena_account
+                        .vrf_seed
+                        .ok_or(ArenaError::RandomnessNotReady)?;
+                    let epoch = self.arena_account.tick / 8;
+                    let h = hashv(&[
+                        &seed,
+                        &(bot_index as u8).to_le_bytes(),
+                        &epoch.to_le_bytes(),
+                    ]);
+                    let (dx, dy) = DIRECTIONS[(h.to_bytes()[0] % 8) as usize];
+                    (bot.x + dx * speed, bot.y + dy * speed)
+                }
             };
 
             let dx = target_x - bot.x;

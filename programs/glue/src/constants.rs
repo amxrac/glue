@@ -15,4 +15,13 @@ pub const SPEED_UPGRADE_COST: u64 = 10;
 pub const VISION_UPGRADE_COST: u64 = 10;
 pub const SPEED_UPGRADE_AMOUNT: u16 = 1;
 pub const VISION_UPGRADE_AMOUNT: u16 = 1;
-pub const KEEPER_PUBKEY: Pubkey = pubkey!("6F1ieXtPmkbB4GENUkYkNrcnQq8NEsuc2gVu2S2vRZYL");
+pub const DIRECTIONS: [(i16, i16); 8] = [
+    (0, 1),
+    (1, 1),
+    (1, 0),
+    (1, -1),
+    (0, -1),
+    (-1, -1),
+    (-1, 0),
+    (-1, 1),
+];

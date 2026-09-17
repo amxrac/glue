@@ -50,7 +50,7 @@ function Home() {
   }
 
   if (status === "running" && !starting) {
-    return <Arena arena={arena} me={wallet.publicKey} />;
+    return <Arena arena={arena} pda={pda!} wallet={wallet} />;
   }
   if (status === "finished") {
     return <Result arena={arena} pda={pda!} wallet={wallet} onDone={() => {}} />;

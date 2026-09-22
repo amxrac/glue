@@ -1,9 +1,8 @@
 use anchor_lang::prelude::*;
 use solana_sha256_hasher::hashv;
 
-use crate::constants::*;
 use crate::state::coordinate_occupied;
-use crate::{error::ArenaError, state::*};
+use crate::{constants::*, error::ArenaError, state::*};
 
 #[derive(Accounts)]
 #[instruction(id: u64)]
@@ -14,6 +13,8 @@ pub struct AdvanceSimulation<'info> {
         bump = arena_account.bump,
     )]
     pub arena_account: Account<'info, ArenaAccount>,
+    #[account(address = crank_signer_pda(&arena_account.host) @ ArenaError::UnauthorizedSigner)]
+    pub crank_signer: Signer<'info>,
 }
 
 impl<'info> AdvanceSimulation<'info> {

@@ -1,5 +1,6 @@
 use crate::constants::*;
 use anchor_lang::prelude::*;
+use magicblock_magic_program_api::{pda::CRANK_SEED, CRANK_PROGRAM_ID};
 
 #[account]
 #[derive(InitSpace)]
@@ -88,6 +89,10 @@ pub fn coordinate_occupied(
     }
 
     false
+}
+
+pub fn crank_signer_pda(authority: &Pubkey) -> Pubkey {
+    Pubkey::find_program_address(&[CRANK_SEED, authority.as_ref()], &CRANK_PROGRAM_ID).0
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]

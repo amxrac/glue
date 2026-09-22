@@ -1,4 +1,4 @@
-use crate::state::ScheduleAdvanceArgs;
+use crate::{constants::*, state::*};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -8,6 +8,7 @@ use bincode;
 use ephemeral_rollups_sdk::consts::MAGIC_PROGRAM_ID;
 use magicblock_magic_program_api::args::ScheduleTaskArgs;
 use magicblock_magic_program_api::instruction::MagicBlockInstruction;
+use magicblock_magic_program_api::pda::CRANK_SIGNER;
 
 #[derive(Accounts)]
 #[instruction(id: u64)]
@@ -39,7 +40,10 @@ impl<'info> ScheduleAdvance<'info> {
     pub fn schedule_advance(&self, id: u64, args: ScheduleAdvanceArgs) -> Result<()> {
         let advance_ix = Instruction {
             program_id: crate::ID,
-            accounts: vec![AccountMeta::new(self.arena_account.key(), false)],
+            accounts: vec![
+                AccountMeta::new(self.arena_account.key(), false),
+                AccountMeta::new_readonly(crank_signer_pda(&self.host.key()), true),
+            ],
             data: anchor_lang::InstructionData::data(&crate::instruction::AdvanceSimulation { id }),
         };
 

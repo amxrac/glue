@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use ephemeral_rollups_sdk::{anchor::delegate, cpi::DelegateConfig};
 
-use crate::{error::ArenaError, state::ArenaAccount, ArenaStatus};
+use crate::{constants::*, error::ArenaError, state::ArenaAccount, ArenaStatus};
 
 #[delegate]
 #[derive(Accounts)]
@@ -22,6 +22,7 @@ pub struct Delegate<'info> {
     )]
     pub arena_account: UncheckedAccount<'info>,
     /// CHECK: Validator account supplied to the delegation program
+    #[account(address = ER_VALIDATOR)]
     pub validator: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }

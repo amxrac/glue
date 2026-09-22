@@ -52,6 +52,10 @@ export type Glue = {
               }
             ]
           }
+        },
+        {
+          "name": "crankSigner",
+          "signer": true
         }
       ],
       "args": [
@@ -392,7 +396,8 @@ export type Glue = {
           }
         },
         {
-          "name": "validator"
+          "name": "validator",
+          "address": "MEUGGrYPxKk17hCr7wpT6s8dtNokZj5U2L57vjYMS8e"
         },
         {
           "name": "systemProgram",

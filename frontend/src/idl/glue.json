@@ -46,6 +46,10 @@
               }
             ]
           }
+        },
+        {
+          "name": "crank_signer",
+          "signer": true
         }
       ],
       "args": [
@@ -386,7 +390,8 @@
           }
         },
         {
-          "name": "validator"
+          "name": "validator",
+          "address": "MEUGGrYPxKk17hCr7wpT6s8dtNokZj5U2L57vjYMS8e"
         },
         {
           "name": "system_program",

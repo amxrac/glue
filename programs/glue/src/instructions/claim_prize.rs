@@ -26,7 +26,6 @@ pub struct ClaimPrize<'info> {
     /// CHECK: for validation
     #[account(mut)]
     pub winner: UncheckedAccount<'info>,
-    pub system_program: Program<'info, System>,
 }
 
 impl<'info> ClaimPrize<'info> {

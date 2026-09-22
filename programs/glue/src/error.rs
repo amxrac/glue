@@ -50,4 +50,10 @@ pub enum ArenaError {
     InvalidRefundAccount,
     #[msg("Missing Refund Account")]
     MissingRefundAccounts,
+    #[msg("Arena already started")]
+    ArenaAlreadyStarted,
+    #[msg("Host Cannot Leave")]
+    HostCannotLeave,
+    #[msg("Not A Player")]
+    NotAPlayer,
 }

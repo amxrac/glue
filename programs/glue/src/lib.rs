@@ -72,4 +72,8 @@ pub mod glue {
     pub fn claim_prize(ctx: Context<ClaimPrize>, id: u64) -> Result<()> {
         instructions::claim_prize::handler(ctx, id)
     }
+
+    pub fn leave_arena(ctx: Context<LeaveArena>, id: u64) -> Result<()> {
+        instructions::leave_arena::handler(ctx, id)
+    }
 }

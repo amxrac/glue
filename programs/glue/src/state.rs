@@ -59,7 +59,7 @@ pub const fn default_bot() -> Bot {
         vision: DEFAULT_VISION,
         speed: DEFAULT_SPEED,
         score: 0,
-        credits: STARTING_CREDITS,
+        credits: 0,
         active: false,
     }
 }

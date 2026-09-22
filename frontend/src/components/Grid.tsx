@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { MAP_WIDTH, MAP_HEIGHT } from "../lib/anchor";
+import { BOT_COLOURS } from "../lib/colours";
 
-export const BOT_COLORS = ["#378ADD", "#1D9E75", "#D85A30", "#D4537E", "#7F77DD", "#888780"];
 const BOARD_BG = "#141412";
 const RESOURCE = "#EF9F27";
 const PULSE_MS = 450;
@@ -74,7 +74,7 @@ export function Grid({ arena, myIndex }: { arena: any; myIndex?: number }) {
 
       a.bots.forEach((b: any, i: number) => {
         if (!b.active) return;
-        const color = BOT_COLORS[i % BOT_COLORS.length];
+        const color = BOT_COLOURS[i % BOT_COLOURS.length];
         const cx = px(b.x), cy = px(b.y);
         const mine = i === myIndex;
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
-import { getPrograms, readBase, connBase, PROGRAM_ID, ENTRY_FEE } from "../lib/anchor";
+import { getPrograms, readBase, connBase, PROGRAM_ID } from "../lib/anchor";
 import { waitFor } from "../lib/waitFor";
 
 export function Result({ arena, pda, wallet, onDone }: {
@@ -18,71 +18,83 @@ export function Result({ arena, pda, wallet, onDone }: {
   const me = wallet.publicKey.toBase58();
   const players: PublicKey[] = arena.players;
   const isHost = arena.host.toBase58() === me;
+  const winner: string | undefined = arena.winner?.toBase58();
+  const isWinner = winner === me;
 
   useEffect(() => {
     let cancelled = false;
     const check = () => {
       connBase.getAccountInfo(pda).then((i) => {
         if (!cancelled) setDelegated(i !== null && !i.owner.equals(PROGRAM_ID));
-      }).catch(() => { /* closed or RPC blip. last known value is kept */ });
+      }).catch(() => {});
     };
     check();
     const t = setInterval(check, 1000);
     return () => { cancelled = true; clearInterval(t); };
   }, [pda.toBase58()]);
 
-  async function settleAndClaim() {
-    setErr(null);
-    try {
-      const { programBase, programEr } = getPrograms(wallet);
-
-
-      const info = await connBase.getAccountInfo(pda);
-      const stillDelegated = info !== null && !info.owner.equals(PROGRAM_ID);
-
-      if (stillDelegated) {
-        setStepBoth("settling on rollup");
-        await programEr.methods.settleArena(arena.id)
-          .accountsPartial({ host: wallet.publicKey, arenaAccount: pda })
-          .rpc();
-
-        setStepBoth("returning to Solana");
-        await waitFor("undelegation", async () => {
-          const i = await connBase.getAccountInfo(pda);
-          return i !== null && i.owner.equals(PROGRAM_ID);
-        });
-      }
-
-      setStepBoth("claiming prize");
-      const settled = await readBase.account.arenaAccount.fetch(pda);
-      if (!settled.winner) throw new Error("no winner recorded on the settled arena");
-      await programBase.methods.claimPrize(arena.id)
-        .accountsPartial({
-          caller: wallet.publicKey,
-          arenaAccount: pda,
-          winner: settled.winner,
-        })
-        .rpc();
-
-      history.replaceState(null, "", location.pathname);
-      onDone();
-    } catch (e: any) {
-      setErr(`${stepRef.current ?? "claim"}: ${String(e.message ?? e)}`);
-    } finally {
-      setStepBoth(null);
-    }
+  async function settle() {
+    const { programEr } = getPrograms(wallet);
+    setStepBoth("settling on rollup");
+    await programEr.methods.settleArena(arena.id)
+      .accountsPartial({ host: wallet.publicKey, arenaAccount: pda })
+      .rpc();
+    setStepBoth("returning to Solana");
+    await waitFor("undelegation", async () => {
+      const i = await connBase.getAccountInfo(pda);
+      return i !== null && i.owner.equals(PROGRAM_ID);
+    });
   }
 
-  const winner = arena.winner?.toBase58();
+  async function claim() {
+    const { programBase } = getPrograms(wallet);
+    setStepBoth("claiming prize");
+    const settled = await readBase.account.arenaAccount.fetch(pda);
+    if (!settled.winner) throw new Error("no winner recorded on the settled arena");
+    await programBase.methods.claimPrize(arena.id)
+      .accountsPartial({ caller: wallet.publicKey, arenaAccount: pda, winner: settled.winner })
+      .rpc();
+    history.replaceState(null, "", location.pathname);
+    onDone();
+  }
+
+  async function act(fn: () => Promise<void>) {
+    setErr(null);
+    try { await fn(); }
+    catch (e: any) { setErr(`${stepRef.current ?? "error"}: ${String(e.message ?? e)}`); }
+    finally { setStepBoth(null); }
+  }
+
+  function renderAction() {
+    const muted: React.CSSProperties = { fontSize: 13, opacity: 0.7 };
+    const btn = (label: string, fn: () => Promise<void>) => (
+      <button style={{ width: "100%" }} disabled={!!step} onClick={() => act(fn)}>
+        {step ?? label}
+      </button>
+    );
+
+    if (delegated === null) return null;
+
+    if (delegated) {
+      if (isHost && isWinner) return btn("Settle & claim", async () => { await settle(); await claim(); });
+      if (isHost) return btn("Settle", settle);
+      return <p style={muted}>Waiting for host to settle…</p>;
+    }
+
+    if (isWinner) return btn("Claim prize", claim);
+    return <p style={muted}>Settled. Waiting for the winner to claim…</p>;
+  }
+
   const box: React.CSSProperties = { maxWidth: 480, margin: "0 auto", padding: 12 };
+  const potSol = (arena.entryFee.toNumber() * players.length) / 1e9;
 
   return (
     <div style={box}>
       <h2 style={{ fontSize: 20, margin: "0 0 4px" }}>
-        {winner === me ? "You won" : "Match over"}
+        {isWinner ? "You won" : "Match over"}
       </h2>
 
-      {winner && winner !== me && (
+      {winner && !isWinner && (
         <p style={{ fontSize: 13, opacity: 0.8, margin: "0 0 8px" }}>
           {winner.slice(0, 4)}…{winner.slice(-4)} won
         </p>
@@ -101,20 +113,10 @@ export function Result({ arena, pda, wallet, onDone }: {
       })}
 
       <p style={{ fontSize: 13, opacity: 0.8, margin: "12px 0" }}>
-        pot {((ENTRY_FEE.toNumber() * players.length) / 1e9).toFixed(4)} SOL
+        pot {potSol.toFixed(4)} SOL
       </p>
 
-      {delegated && !isHost ? (
-        <p style={{ fontSize: 13, opacity: 0.7 }}>Waiting for host to settle…</p>
-      ) : (
-        <button
-          style={{ width: "100%" }}
-          disabled={!!step || delegated === null}
-          onClick={settleAndClaim}
-        >
-          {step ?? (delegated ? "Settle & claim" : "Claim prize")}
-        </button>
-      )}
+      {renderAction()}
 
       {err && <p style={{ color: "crimson", fontSize: 13 }}>{err}</p>}
     </div>

@@ -56,6 +56,13 @@ export function Lobby({
       .rpc();
   }
 
+  async function leave() {
+    const { programBase } = getPrograms(wallet);
+    await programBase.methods.leaveArena(arena.id)
+      .accountsPartial({ player: wallet.publicKey, arenaAccount: pda! })
+      .rpc();
+  }
+
   async function start() {
     onStarting(true);
     try {
@@ -183,7 +190,13 @@ export function Lobby({
       )}
 
       {joined && !isHost && (
-        <p style={{ fontSize: 12, opacity: 0.7 }}>Waiting for host to start…</p>
+        <>
+          <p style={{ fontSize: 12, opacity: 0.7 }}>Waiting for host to start…</p>
+          <button style={{ width: "100%", fontSize: 13 }} disabled={!!step}
+            onClick={() => run("leaving", leave)}>
+            Leave and refund
+          </button>
+        </>
       )}
       {err && <p style={{ color: "crimson", fontSize: 13 }}>{err}</p>}
     </div>

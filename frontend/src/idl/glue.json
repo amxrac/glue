@@ -163,10 +163,6 @@
         {
           "name": "winner",
           "writable": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -521,6 +517,59 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "leave_arena",
+      "discriminator": [
+        204,
+        47,
+        233,
+        122,
+        254,
+        232,
+        201,
+        66
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -1125,6 +1174,21 @@
       "code": 6023,
       "name": "MissingRefundAccounts",
       "msg": "Missing Refund Account"
+    },
+    {
+      "code": 6024,
+      "name": "ArenaAlreadyStarted",
+      "msg": "Arena already started"
+    },
+    {
+      "code": 6025,
+      "name": "HostCannotLeave",
+      "msg": "Host Cannot Leave"
+    },
+    {
+      "code": 6026,
+      "name": "NotAPlayer",
+      "msg": "Not A Player"
     }
   ],
   "types": [
@@ -1355,9 +1419,9 @@
   ],
   "constants": [
     {
-      "name": "STARTING_CREDITS",
-      "type": "u64",
-      "value": "100"
+      "name": "DEFAULT_VISION",
+      "type": "u16",
+      "value": "10"
     }
   ]
 }

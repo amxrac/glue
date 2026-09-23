@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import type { PublicKey } from "@solana/web3.js";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
 import { getPrograms } from "../lib/anchor";
-import { Grid, BOT_COLORS } from "../components/Grid";
+import { Grid } from "../components/Grid";
+import { BOT_COLOURS } from "../lib/colours";
 
 const SPEED_COST = 10;
 const VISION_COST = 10;
@@ -75,7 +76,7 @@ export function Arena({ arena, pda, wallet }: {
           >
             <span style={{
               width: 10, height: 10, borderRadius: 5,
-              background: BOT_COLORS[i % BOT_COLORS.length], flexShrink: 0,
+              background: BOT_COLOURS[i % BOT_COLOURS.length], flexShrink: 0,
             }} />
             <span style={{ fontSize: 13 }}>
               {key === myKey ? "you" : key.slice(0, 4) + "…" + key.slice(-4)}

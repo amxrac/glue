@@ -169,10 +169,6 @@ export type Glue = {
         {
           "name": "winner",
           "writable": true
-        },
-        {
-          "name": "systemProgram",
-          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -527,6 +523,59 @@ export type Glue = {
         {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "leaveArena",
+      "discriminator": [
+        204,
+        47,
+        233,
+        122,
+        254,
+        232,
+        201,
+        66
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arenaAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "arenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -1131,6 +1180,21 @@ export type Glue = {
       "code": 6023,
       "name": "missingRefundAccounts",
       "msg": "Missing Refund Account"
+    },
+    {
+      "code": 6024,
+      "name": "arenaAlreadyStarted",
+      "msg": "Arena already started"
+    },
+    {
+      "code": 6025,
+      "name": "hostCannotLeave",
+      "msg": "Host Cannot Leave"
+    },
+    {
+      "code": 6026,
+      "name": "notAPlayer",
+      "msg": "Not A Player"
     }
   ],
   "types": [
@@ -1361,9 +1425,9 @@ export type Glue = {
   ],
   "constants": [
     {
-      "name": "startingCredits",
-      "type": "u64",
-      "value": "100"
+      "name": "defaultVision",
+      "type": "u16",
+      "value": "10"
     }
   ]
 };

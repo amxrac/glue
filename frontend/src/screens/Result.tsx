@@ -4,6 +4,11 @@ import type { AnchorWallet } from "@solana/wallet-adapter-react";
 import { getPrograms, readBase, connBase, PROGRAM_ID } from "../lib/anchor";
 import { waitFor } from "../lib/waitFor";
 
+type Action =
+  | { kind: "button"; label: string; fn: () => Promise<void> }
+  | { kind: "note"; text: string }
+  | null;
+
 export function Result({ arena, pda, wallet, onDone }: {
   arena: any; pda: PublicKey; wallet: AnchorWallet; onDone: () => void;
 }) {
@@ -17,7 +22,6 @@ export function Result({ arena, pda, wallet, onDone }: {
 
   const me = wallet.publicKey.toBase58();
   const players: PublicKey[] = arena.players;
-  const isHost = arena.host.toBase58() === me;
   const winner: string | undefined = arena.winner?.toBase58();
   const isWinner = winner === me;
 
@@ -26,7 +30,7 @@ export function Result({ arena, pda, wallet, onDone }: {
     const check = () => {
       connBase.getAccountInfo(pda).then((i) => {
         if (!cancelled) setDelegated(i !== null && !i.owner.equals(PROGRAM_ID));
-      }).catch(() => {});
+      }).catch(() => {  });
     };
     check();
     const t = setInterval(check, 1000);
@@ -35,15 +39,26 @@ export function Result({ arena, pda, wallet, onDone }: {
 
   async function settle() {
     const { programEr } = getPrograms(wallet);
-    setStepBoth("settling on rollup");
-    await programEr.methods.settleArena(arena.id)
-      .accountsPartial({ host: wallet.publicKey, arenaAccount: pda })
-      .rpc();
-    setStepBoth("returning to Solana");
-    await waitFor("undelegation", async () => {
+    const backOnBase = async () => {
       const i = await connBase.getAccountInfo(pda);
       return i !== null && i.owner.equals(PROGRAM_ID);
-    });
+    };
+
+    setStepBoth("settling on rollup");
+    try {
+      await programEr.methods.settleArena(arena.id)
+        .accountsPartial({ payer: wallet.publicKey, arenaAccount: pda })
+        .rpc();
+    } catch (e: any) {
+        const msg = String(e?.message ?? e);
+        if (/reject|ArenaNotFinished/i.test(msg)) throw e;
+        setStepBoth("returning to Solana");
+        try { await waitFor("undelegation", backOnBase, 10_000); return; }
+        catch { throw e; }
+      }
+
+    setStepBoth("returning to Solana");
+    await waitFor("undelegation", backOnBase);
   }
 
   async function claim() {
@@ -58,6 +73,11 @@ export function Result({ arena, pda, wallet, onDone }: {
     onDone();
   }
 
+  async function settleAndClaim() {
+    await settle();
+    await claim();
+  }
+
   async function act(fn: () => Promise<void>) {
     setErr(null);
     try { await fn(); }
@@ -65,25 +85,13 @@ export function Result({ arena, pda, wallet, onDone }: {
     finally { setStepBoth(null); }
   }
 
-  function renderAction() {
-    const muted: React.CSSProperties = { fontSize: 13, opacity: 0.7 };
-    const btn = (label: string, fn: () => Promise<void>) => (
-      <button style={{ width: "100%" }} disabled={!!step} onClick={() => act(fn)}>
-        {step ?? label}
-      </button>
-    );
-
-    if (delegated === null) return null;
-
-    if (delegated) {
-      if (isHost && isWinner) return btn("Settle & claim", async () => { await settle(); await claim(); });
-      if (isHost) return btn("Settle", settle);
-      return <p style={muted}>Waiting for host to settle…</p>;
-    }
-
-    if (isWinner) return btn("Claim prize", claim);
-    return <p style={muted}>Settled. Waiting for the winner to claim…</p>;
-  }
+  const action: Action =
+    delegated === null ? null
+    : delegated
+      ? isWinner ? { kind: "button", label: "Settle & claim", fn: settleAndClaim }
+      : { kind: "button", label: "Settle", fn: settle }
+    : isWinner ? { kind: "button", label: "Claim prize", fn: claim }
+    : { kind: "note", text: "Settled. Waiting for the winner to claim…" };
 
   const box: React.CSSProperties = { maxWidth: 480, margin: "0 auto", padding: 12 };
   const potSol = (arena.entryFee.toNumber() * players.length) / 1e9;
@@ -116,7 +124,14 @@ export function Result({ arena, pda, wallet, onDone }: {
         pot {potSol.toFixed(4)} SOL
       </p>
 
-      {renderAction()}
+      {action?.kind === "button" && (
+        <button style={{ width: "100%" }} disabled={!!step} onClick={() => act(action.fn)}>
+          {step ?? action.label}
+        </button>
+      )}
+      {action?.kind === "note" && (
+        <p style={{ fontSize: 13, opacity: 0.7 }}>{action.text}</p>
+      )}
 
       {err && <p style={{ color: "crimson", fontSize: 13 }}>{err}</p>}
     </div>

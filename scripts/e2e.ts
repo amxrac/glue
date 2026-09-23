@@ -22,13 +22,14 @@ const VALIDATOR = new PublicKey("MEUGGrYPxKk17hCr7wpT6s8dtNokZj5U2L57vjYMS8e");
 
 const ARENA_ID = new anchor.BN(Date.now() % 1_000_000);
 const CANCEL_ARENA_ID = ARENA_ID.addn(1);
+const LEAVE_ARENA_ID = ARENA_ID.addn(2);
 const ENTRY_FEE = new anchor.BN(0.01 * LAMPORTS_PER_SOL);
 const MAX_TICKS = 550;
 const PLAYERS = 2;
 
 const TASK_ID = new anchor.BN(1);
 const INTERVAL_MS = new anchor.BN(100);
-const ITERATIONS = new anchor.BN(MAX_TICKS);
+const ITERATIONS = new anchor.BN(MAX_TICKS + 50);
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -44,7 +45,6 @@ async function waitFor(
     try {
       if (await check()) return Date.now() - start;
     } catch {
-      // account unreadable mid-transition; keep polling
     }
     await sleep(intervalMs);
   }
@@ -60,6 +60,17 @@ function arenaPda(host: PublicKey, id: anchor.BN, programId: PublicKey) {
 
 function assert(cond: unknown, msg: string): asserts cond {
   if (!cond) throw new Error(msg);
+}
+
+async function expectError(codes: string[], fn: () => Promise<unknown>) {
+  try {
+    await fn();
+  } catch (e: any) {
+    const msg = [e?.error?.errorCode?.code, String(e), ...(e?.logs ?? [])].join("\n");
+    if (codes.some((c) => msg.includes(c))) return;
+    throw new Error(`expected ${codes.join(" | ")}, got:\n${msg}`);
+  }
+  throw new Error(`expected ${codes.join(" | ")}, but the call succeeded`);
 }
 
 (async () => {
@@ -91,7 +102,7 @@ function assert(cond: unknown, msg: string): asserts cond {
       SystemProgram.transfer({
         fromPubkey: host.publicKey,
         toPubkey: player2.publicKey,
-        lamports: ENTRY_FEE.toNumber() * 2 + 0.02 * LAMPORTS_PER_SOL,
+        lamports: ENTRY_FEE.toNumber() * 3 + 0.02 * LAMPORTS_PER_SOL,
       })
     )
   );
@@ -128,6 +139,64 @@ function assert(cond: unknown, msg: string): asserts cond {
     );
     assert((await connBase.getAccountInfo(cancelPda)) === null, "cancelled arena pda was not closed");
     console.log(`cancel_arena ok (refunded ${refunded / LAMPORTS_PER_SOL} SOL)`);
+  }
+
+  {
+    const leavePda = arenaPda(host.publicKey, LEAVE_ARENA_ID, PROGRAM_ID);
+
+    await programBase.methods
+      .initArena(LEAVE_ARENA_ID, ENTRY_FEE)
+      .accounts({ host: host.publicKey })
+      .rpc();
+
+    await programBase.methods
+      .joinArena(LEAVE_ARENA_ID)
+      .accountsPartial({ player: player2.publicKey, arenaAccount: leavePda })
+      .signers([player2])
+      .rpc();
+
+    // the host must cancel, not leave
+    await expectError(["HostCannotLeave"], () =>
+      programBase.methods
+        .leaveArena(LEAVE_ARENA_ID)
+        .accountsPartial({ player: host.publicKey, arenaAccount: leavePda })
+        .rpc()
+    );
+
+    // host pays the tx fee, so player2's balance moves by exactly the refund
+    const before = await connBase.getBalance(player2.publicKey);
+    await programBase.methods
+      .leaveArena(LEAVE_ARENA_ID)
+      .accountsPartial({ player: player2.publicKey, arenaAccount: leavePda })
+      .signers([player2])
+      .rpc();
+    const refunded = (await connBase.getBalance(player2.publicKey)) - before;
+    assert(
+      refunded === ENTRY_FEE.toNumber(),
+      `leave refund wrong: got ${refunded}, want ${ENTRY_FEE.toNumber()}`
+    );
+
+    const a = await programBase.account.arenaAccount.fetch(leavePda);
+    assert(a.players.length === 1, `players not reduced: ${a.players.length}`);
+    assert(!a.bots[1].active, "departed player's bot still active");
+
+    // second leave
+    await expectError(["NotAPlayer"], () =>
+      programBase.methods
+        .leaveArena(LEAVE_ARENA_ID)
+        .accountsPartial({ player: player2.publicKey, arenaAccount: leavePda })
+        .signers([player2])
+        .rpc()
+    );
+
+    // clean up
+    await programBase.methods
+      .cancelArena(LEAVE_ARENA_ID)
+      .accountsPartial({ host: host.publicKey, arenaAccount: leavePda })
+      .remainingAccounts([{ pubkey: host.publicKey, isWritable: true, isSigner: false }])
+      .rpc();
+
+    console.log("leave_arena ok (refund, removal, host + double-leave rejected)");
   }
 
   // probe A: ER slot rate
@@ -215,27 +284,13 @@ function assert(cond: unknown, msg: string): asserts cond {
   }
 
   // a player must not be able to advance the match
-  // must fail on the crank-signer constraint
-  {
-    let rejected = false;
-    try {
-      await programEr.methods
-        .advanceSimulation(ARENA_ID)
-        .accountsPartial({ arenaAccount: pda, crankSigner: host.publicKey })
-        .rpc();
-    } catch (e: any) {
-      const logs: string[] = (await e.getLogs?.(connEr)) ?? e?.logs ?? [];
-      const msg = String(e) + logs.join("\n");
-      const ok =
-        e?.error?.errorCode?.code === "UnauthorizedSigner" ||
-        msg.includes("Unauthorized Signer") ||
-        msg.includes("ConstraintAddress");
-      if (!ok) throw new Error(`advance_simulation failed for the wrong reason:\n${msg}`);
-      rejected = true;
-    }
-    assert(rejected, "advance_simulation accepted a non-crank signer");
-    console.log("advance_simulation rejects players: ok\n");
-  }
+  await expectError(["UnauthorizedSigner", "Unauthorized Signer", "ConstraintAddress"], () =>
+    programEr.methods
+      .advanceSimulation(ARENA_ID)
+      .accountsPartial({ arenaAccount: pda, crankSigner: host.publicKey })
+      .rpc()
+  );
+  console.log("advance_simulation rejects players: ok\n");
 
   // buy one upgrade mid-match
   let lastTick = new anchor.BN(-1);
@@ -308,9 +363,11 @@ function assert(cond: unknown, msg: string): asserts cond {
     }
   }
 
+  // settle from player2
   await programEr.methods
     .settleArena(ARENA_ID)
-    .accountsPartial({ host: host.publicKey, arenaAccount: pda })
+    .accountsPartial({ payer: player2.publicKey, arenaAccount: pda })
+    .signers([player2])
     .rpc();
 
   latencies.undelegate = await waitFor("undelegation", async () => {

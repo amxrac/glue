@@ -8,12 +8,11 @@ use ephemeral_rollups_sdk::ephem::{FoldableIntentBuilder, MagicIntentBundleBuild
 #[instruction(id: u64)]
 pub struct SettleArena<'info> {
     #[account(mut)]
-    pub host: Signer<'info>,
+    pub payer: Signer<'info>,
     #[account(
             mut,
             seeds = [b"arena", arena_account.host.key().as_ref(), &id.to_le_bytes()],
             bump = arena_account.bump,
-            has_one = host
         )]
     pub arena_account: Account<'info, ArenaAccount>,
 }
@@ -27,7 +26,7 @@ impl<'info> SettleArena<'info> {
         self.arena_account.exit(&crate::ID)?;
 
         MagicIntentBundleBuilder::new(
-            self.host.to_account_info(),
+            self.payer.to_account_info(),
             self.magic_context.to_account_info(),
             self.magic_program.to_account_info(),
         )

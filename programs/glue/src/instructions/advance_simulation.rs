@@ -229,17 +229,20 @@ impl<'info> AdvanceSimulation<'info> {
         if self.arena_account.tick >= self.arena_account.max_ticks {
             self.arena_account.status = ArenaStatus::Finished;
 
-            let winner_idx = self
-                .arena_account
-                .bots
+            let n = self.arena_account.players.len();
+            let top = self.arena_account.bots[..n]
                 .iter()
-                .enumerate()
-                .filter(|(i, b)| b.active && *i < self.arena_account.players.len())
-                .max_by_key(|(i, b)| (b.score, std::cmp::Reverse(*i)))
-                .map(|(i, _)| i)
+                .filter(|b| b.active)
+                .map(|b| b.score)
+                .max()
                 .ok_or(ArenaError::NoActiveBots)?;
-
-            self.arena_account.winner = Some(self.arena_account.players[winner_idx]);
+            let mut winners = 0u8;
+            for (i, b) in self.arena_account.bots[..n].iter().enumerate() {
+                if b.active && b.score == top {
+                    winners |= 1u8 << i;
+                }
+            }
+            self.arena_account.winners = winners;
         }
 
         Ok(())

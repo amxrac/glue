@@ -69,7 +69,7 @@ pub mod glue {
         instructions::cancel_arena::handler(ctx, id)
     }
 
-    pub fn claim_prize(ctx: Context<ClaimPrize>, id: u64) -> Result<()> {
+    pub fn claim_prize<'info>(ctx: Context<'info, ClaimPrize<'info>>, id: u64) -> Result<()> {
         instructions::claim_prize::handler(ctx, id)
     }
 

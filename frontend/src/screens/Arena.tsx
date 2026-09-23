@@ -7,6 +7,8 @@ import { BOT_COLOURS } from "../lib/colours";
 
 const SPEED_COST = 10;
 const VISION_COST = 10;
+const SPEED_AMOUNT = 1;
+const VISION_AMOUNT = 1;
 
 function statusOf(arena: any): string {
   return Object.keys(arena.status)[0];
@@ -91,14 +93,14 @@ export function Arena({ arena, pda, wallet }: {
       {myBot && status === "running" && (
         <>
           <div style={{ fontSize: 12, opacity: 0.7, margin: "12px 0 6px" }}>
-            credits {credits} · speed {myBot.speed} · vision {myBot.vision}
+            credits {credits}
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
             <button disabled={busy || credits < SPEED_COST} onClick={() => upgrade("speed")}>
-              Speed · {SPEED_COST}
+              Speed {myBot.speed} → {myBot.speed + SPEED_AMOUNT} · {SPEED_COST} cr
             </button>
             <button disabled={busy || credits < VISION_COST} onClick={() => upgrade("vision")}>
-              Vision · {VISION_COST}
+              Vision {myBot.vision} → {myBot.vision + VISION_AMOUNT} · {VISION_COST} cr
             </button>
           </div>
         </>

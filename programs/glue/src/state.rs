@@ -17,7 +17,7 @@ pub struct ArenaAccount {
     pub tick: u64,
     pub max_ticks: u64,
     pub entry_fee: u64,
-    pub winner: Option<Pubkey>,
+    pub winners: u8,
     pub bump: u8,
 }
 

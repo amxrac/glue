@@ -167,7 +167,7 @@ export type Glue = {
           }
         },
         {
-          "name": "winner",
+          "name": "host",
           "writable": true
         }
       ],
@@ -862,12 +862,9 @@ export type Glue = {
       ],
       "accounts": [
         {
-          "name": "host",
+          "name": "payer",
           "writable": true,
-          "signer": true,
-          "relations": [
-            "arenaAccount"
-          ]
+          "signer": true
         },
         {
           "name": "arenaAccount",
@@ -1195,6 +1192,11 @@ export type Glue = {
       "code": 6026,
       "name": "notAPlayer",
       "msg": "Not A Player"
+    },
+    {
+      "code": 6027,
+      "name": "invalidWinnerAccounts",
+      "msg": "Invalid Winner Accounts"
     }
   ],
   "types": [
@@ -1279,10 +1281,8 @@ export type Glue = {
             "type": "u64"
           },
           {
-            "name": "winner",
-            "type": {
-              "option": "pubkey"
-            }
+            "name": "winners",
+            "type": "u8"
           },
           {
             "name": "bump",
@@ -1301,15 +1301,21 @@ export type Glue = {
             "type": "u64"
           },
           {
-            "name": "winner",
-            "type": "pubkey"
+            "name": "winners",
+            "type": {
+              "vec": "pubkey"
+            }
           },
           {
-            "name": "score",
+            "name": "topScore",
             "type": "u64"
           },
           {
-            "name": "payout",
+            "name": "pool",
+            "type": "u64"
+          },
+          {
+            "name": "share",
             "type": "u64"
           }
         ]

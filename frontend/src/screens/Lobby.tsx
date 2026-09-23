@@ -3,17 +3,15 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
 import {
-  getPrograms, arenaPda, readBase, connBase,
-  ENTRY_FEE, PROGRAM_ID, ORACLE_QUEUE, VALIDATOR,
-  DELEGATION_PROGRAM, TASK_ID, INTERVAL_MS,
+  getPrograms, arenaPda, readBase, readEr, connBase,
+  ENTRY_FEE, PROGRAM_ID, ORACLE_QUEUE, VALIDATOR, DELEGATION_PROGRAM, INTERVAL_MS,
 } from "../lib/anchor";
 import { waitFor } from "../lib/waitFor";
 
 const MAGIC_PROGRAM = new PublicKey("Magic11111111111111111111111111111111111111");
 
-
 export function Lobby({
-  arena, pda, wallet, onCreated, onStarting
+  arena, pda, wallet, onCreated, onStarting,
 }: {
   arena: any;
   pda: PublicKey | null;
@@ -23,6 +21,7 @@ export function Lobby({
 }) {
   const [step, setStep] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const stepRef = useRef<string | null>(null);
   const me = wallet.publicKey.toBase58();
 
@@ -42,7 +41,7 @@ export function Lobby({
     await programBase.methods
       .initArena(id, ENTRY_FEE)
       .accounts({ host: wallet.publicKey })
-      .rpc({ skipPreflight: true })
+      .rpc();
     const p = arenaPda(wallet.publicKey, id, PROGRAM_ID);
     history.replaceState(null, "", `?arena=${p.toBase58()}`);
     onCreated(p);
@@ -68,39 +67,51 @@ export function Lobby({
     try {
       const { programBase, programEr } = getPrograms(wallet);
       const id = arena.id;
-
-      setStepBoth("requesting randomness");
-      await programBase.methods.requestRandomness(id)
-        .accountsPartial({ host: wallet.publicKey, arenaAccount: pda!, oracleQueue: ORACLE_QUEUE })
-        .rpc();
-
-      setStepBoth("waiting for VRF");
-      await waitFor("vrf_seed", async () =>
-        (await readBase.account.arenaAccount.fetch(pda!)).vrfSeed !== null);
-
-      setStepBoth("placing bots");
-      await programBase.methods.startArena(id)
-        .accountsPartial({ host: wallet.publicKey, arenaAccount: pda! })
-        .rpc();
-
-      setStepBoth("delegating to rollup");
-      await programBase.methods.delegate(id)
-        .accounts({ host: wallet.publicKey, validator: VALIDATOR })
-        .rpc();
-      await waitFor("delegation", async () => {
+      const isDelegated = async () => {
         const info = await connBase.getAccountInfo(pda!);
         return info !== null && info.owner.equals(DELEGATION_PROGRAM);
-      });
+      };
 
-      setStepBoth("starting simulation");
-      await programEr.methods
-        .scheduleAdvance(id, {
-          taskId: TASK_ID,
-          executionIntervalMillis: INTERVAL_MS,
-          iterations: arena.maxTicks,
-        })
-        .accounts({ magicProgram: MAGIC_PROGRAM, host: wallet.publicKey, program: PROGRAM_ID })
-        .rpc();
+      if (!(await isDelegated())) {
+        let a = await readBase.account.arenaAccount.fetch(pda!);
+
+        if (a.vrfSeed === null) {
+          setStepBoth("requesting randomness");
+          await programBase.methods.requestRandomness(id)
+            .accountsPartial({ host: wallet.publicKey, arenaAccount: pda!, oracleQueue: ORACLE_QUEUE })
+            .rpc();
+          setStepBoth("waiting for VRF");
+          await waitFor("vrf_seed", async () =>
+            (await readBase.account.arenaAccount.fetch(pda!)).vrfSeed !== null);
+          a = await readBase.account.arenaAccount.fetch(pda!);
+        }
+
+        if ("waiting" in a.status) {
+          setStepBoth("placing bots");
+          await programBase.methods.startArena(id)
+            .accountsPartial({ host: wallet.publicKey, arenaAccount: pda! })
+            .rpc();
+        }
+
+        setStepBoth("delegating to rollup");
+        await programBase.methods.delegate(id)
+          .accounts({ host: wallet.publicKey, validator: VALIDATOR })
+          .rpc();
+        await waitFor("delegation", isDelegated);
+      }
+
+      const live = await readEr.account.arenaAccount.fetch(pda!).catch(() => null);
+      if (!live || live.tick.isZero()) {
+        setStepBoth("starting simulation");
+        await programEr.methods
+          .scheduleAdvance(id, {
+            taskId: id,
+            executionIntervalMillis: INTERVAL_MS,
+            iterations: arena.maxTicks.addn(50),
+          })
+          .accounts({ magicProgram: MAGIC_PROGRAM, host: wallet.publicKey, program: PROGRAM_ID })
+          .rpc();
+      }
     } finally {
       onStarting(false);
     }
@@ -136,42 +147,49 @@ export function Lobby({
   const players: PublicKey[] = arena.players;
   const isHost = arena.host.toBase58() === me;
   const joined = players.some((p) => p.toBase58() === me);
-  const full = players.length >= 6;
-  const link = `${location.origin}/?arena=${pda.toBase58()}`;
+  const maxPlayers = arena.bots.length;
+  const full = players.length >= maxPlayers;
+  const feeSol = arena.entryFee.toNumber() / 1e9;
+  const link = `${location.origin}${import.meta.env.BASE_URL}?arena=${pda.toBase58()}`;
+
+  function copyLink() {
+    navigator.clipboard.writeText(link)
+      .then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); })
+      .catch(() => setErr("couldn't copy. copy the URL from the address bar"));
+  }
 
   return (
     <div style={box}>
       <h2 style={{ margin: "0 0 2px", fontSize: 18 }}>Arena #{arena.id.toNumber()}</h2>
       <p style={{ margin: "0 0 12px", fontSize: 12, opacity: 0.7 }}>
-        Entry {(ENTRY_FEE.toNumber() / 1e9).toFixed(3)} SOL · pot{" "}
-        {((ENTRY_FEE.toNumber() * players.length) / 1e9).toFixed(3)} SOL
+        Entry {feeSol.toFixed(3)} SOL · pot {(feeSol * players.length).toFixed(3)} SOL
       </p>
 
-      {players.map((p, i) => {
+      {players.map((p) => {
         const k = p.toBase58();
         return (
           <div key={k} style={{ display: "flex", gap: 8, padding: "7px 0", borderTop: "1px solid #ddd", fontSize: 13 }}>
             <span style={{ fontFamily: "monospace" }}>{k.slice(0, 4)}…{k.slice(-4)}</span>
             <span style={{ marginLeft: "auto", fontSize: 11, opacity: 0.6 }}>
-              {i === 0 ? "host" : "joined"}{k === me ? " · you" : ""}
+              {}
+              {p.equals(arena.host) ? "host" : "joined"}{k === me ? " · you" : ""}
             </span>
           </div>
         );
       })}
       <p style={{ fontSize: 12, opacity: 0.7, margin: "10px 0" }}>
-        {players.length} of 6 joined
+        {players.length} of {maxPlayers} joined
       </p>
 
-      <button style={{ width: "100%", marginBottom: 6 }}
-        onClick={() => navigator.clipboard.writeText(link)}>
-        Copy invite link
+      <button style={{ width: "100%", marginBottom: 6 }} onClick={copyLink}>
+        {copied ? "Copied" : "Copy invite link"}
       </button>
 
       {!joined && (
         <button style={{ width: "100%", marginBottom: 6 }}
           disabled={full || !!step}
           onClick={() => run("joining", join)}>
-          {full ? "Arena full" : `Join · ${(ENTRY_FEE.toNumber() / 1e9).toFixed(3)} SOL`}
+          {full ? "Arena full" : `Join · ${feeSol.toFixed(3)} SOL`}
         </button>
       )}
 

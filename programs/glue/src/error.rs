@@ -56,4 +56,6 @@ pub enum ArenaError {
     HostCannotLeave,
     #[msg("Not A Player")]
     NotAPlayer,
+    #[msg("Invalid Winner Accounts")]
+    InvalidWinnerAccounts,
 }

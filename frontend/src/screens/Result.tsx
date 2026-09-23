@@ -9,6 +9,12 @@ type Action =
   | { kind: "note"; text: string }
   | null;
 
+function leadersOf(a: any): PublicKey[] {
+  return (a.players as PublicKey[]).filter((_, i) => (a.winners & (1 << i)) !== 0);
+}
+
+const short = (k: string) => `${k.slice(0, 4)}…${k.slice(-4)}`;
+
 export function Result({ arena, pda, wallet, onDone }: {
   arena: any; pda: PublicKey; wallet: AnchorWallet; onDone: () => void;
 }) {
@@ -22,8 +28,9 @@ export function Result({ arena, pda, wallet, onDone }: {
 
   const me = wallet.publicKey.toBase58();
   const players: PublicKey[] = arena.players;
-  const winner: string | undefined = arena.winner?.toBase58();
-  const isWinner = winner === me;
+  const leaders = leadersOf(arena).map((p) => p.toBase58());
+  const isWinner = leaders.includes(me);
+  const tie = leaders.length > 1;
 
   useEffect(() => {
     let cancelled = false;
@@ -50,12 +57,12 @@ export function Result({ arena, pda, wallet, onDone }: {
         .accountsPartial({ payer: wallet.publicKey, arenaAccount: pda })
         .rpc();
     } catch (e: any) {
-        const msg = String(e?.message ?? e);
-        if (/reject|ArenaNotFinished/i.test(msg)) throw e;
-        setStepBoth("returning to Solana");
-        try { await waitFor("undelegation", backOnBase, 10_000); return; }
-        catch { throw e; }
-      }
+      const msg = String(e?.message ?? e);
+      if (/reject|ArenaNotFinished/i.test(msg)) throw e;
+      setStepBoth("returning to Solana");
+      try { await waitFor("undelegation", backOnBase, 10_000); return; }
+      catch { throw e; }
+    }
 
     setStepBoth("returning to Solana");
     await waitFor("undelegation", backOnBase);
@@ -65,9 +72,11 @@ export function Result({ arena, pda, wallet, onDone }: {
     const { programBase } = getPrograms(wallet);
     setStepBoth("claiming prize");
     const settled = await readBase.account.arenaAccount.fetch(pda);
-    if (!settled.winner) throw new Error("no winner recorded on the settled arena");
+    const winners = leadersOf(settled);
+    if (winners.length === 0) throw new Error("no winners recorded on the settled arena");
     await programBase.methods.claimPrize(arena.id)
-      .accountsPartial({ caller: wallet.publicKey, arenaAccount: pda, winner: settled.winner })
+      .accountsPartial({ caller: wallet.publicKey, arenaAccount: pda, host: settled.host })
+      .remainingAccounts(winners.map((pubkey) => ({ pubkey, isWritable: true, isSigner: false })))
       .rpc();
     history.replaceState(null, "", location.pathname);
     onDone();
@@ -91,28 +100,29 @@ export function Result({ arena, pda, wallet, onDone }: {
       ? isWinner ? { kind: "button", label: "Settle & claim", fn: settleAndClaim }
       : { kind: "button", label: "Settle", fn: settle }
     : isWinner ? { kind: "button", label: "Claim prize", fn: claim }
-    : { kind: "note", text: "Settled. Waiting for the winner to claim…" };
+    : { kind: "note", text: "Settled. Waiting for a winner to claim…" };
 
   const box: React.CSSProperties = { maxWidth: 480, margin: "0 auto", padding: 12 };
   const potSol = (arena.entryFee.toNumber() * players.length) / 1e9;
+  const subtitle = tie
+    ? `Tie — pot split ${leaders.length} ways`
+    : !isWinner && leaders[0] ? `${short(leaders[0])} won` : null;
 
   return (
     <div style={box}>
       <h2 style={{ fontSize: 20, margin: "0 0 4px" }}>
-        {isWinner ? "You won" : "Match over"}
+        {isWinner ? (tie ? "You tied" : "You won") : "Match over"}
       </h2>
 
-      {winner && !isWinner && (
-        <p style={{ fontSize: 13, opacity: 0.8, margin: "0 0 8px" }}>
-          {winner.slice(0, 4)}…{winner.slice(-4)} won
-        </p>
+      {subtitle && (
+        <p style={{ fontSize: 13, opacity: 0.8, margin: "0 0 8px" }}>{subtitle}</p>
       )}
 
       {players.map((p, i) => {
         const k = p.toBase58();
         return (
           <div key={k} style={{ display: "flex", padding: "7px 0", borderTop: "1px solid #ddd", fontSize: 13 }}>
-            <span>{k === me ? "you" : `${k.slice(0, 4)}…${k.slice(-4)}`}</span>
+            <span>{k === me ? "you" : short(k)}</span>
             <span style={{ marginLeft: "auto", fontFamily: "monospace" }}>
               {arena.bots[i].score.toNumber()}
             </span>

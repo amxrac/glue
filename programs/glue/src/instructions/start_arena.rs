@@ -110,7 +110,7 @@ impl<'info> StartArena<'info> {
                 }
             }
         }
-
+        self.arena_account.started_at = Clock::get()?.unix_timestamp;
         self.arena_account.status = ArenaStatus::Running;
         Ok(())
     }

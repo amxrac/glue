@@ -58,4 +58,6 @@ pub enum ArenaError {
     NotAPlayer,
     #[msg("Invalid Winner Accounts")]
     InvalidWinnerAccounts,
+    #[msg("Match Not Timed Out")]
+    MatchNotTimedOut,
 }

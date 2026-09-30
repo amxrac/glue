@@ -76,4 +76,8 @@ pub mod glue {
     pub fn leave_arena(ctx: Context<LeaveArena>, id: u64) -> Result<()> {
         instructions::leave_arena::handler(ctx, id)
     }
+
+    pub fn force_finish(ctx: Context<ForceFinish>, id: u64) -> Result<()> {
+        instructions::force_finish::handler(ctx, id)
+    }
 }

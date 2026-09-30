@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use solana_sha256_hasher::hashv;
 
-use crate::state::coordinate_occupied;
 use crate::{constants::*, error::ArenaError, state::*};
 
 #[derive(Accounts)]
@@ -227,22 +226,7 @@ impl<'info> AdvanceSimulation<'info> {
 
     fn finish_if_complete(&mut self) -> Result<()> {
         if self.arena_account.tick >= self.arena_account.max_ticks {
-            self.arena_account.status = ArenaStatus::Finished;
-
-            let n = self.arena_account.players.len();
-            let top = self.arena_account.bots[..n]
-                .iter()
-                .filter(|b| b.active)
-                .map(|b| b.score)
-                .max()
-                .ok_or(ArenaError::NoActiveBots)?;
-            let mut winners = 0u8;
-            for (i, b) in self.arena_account.bots[..n].iter().enumerate() {
-                if b.active && b.score == top {
-                    winners |= 1u8 << i;
-                }
-            }
-            self.arena_account.winners = winners;
+            self.arena_account.finalize(false)?;
         }
 
         Ok(())

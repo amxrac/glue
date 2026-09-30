@@ -1,4 +1,4 @@
-use crate::constants::*;
+use crate::{constants::*, error::*};
 use anchor_lang::prelude::*;
 use magicblock_magic_program_api::{pda::CRANK_SEED, CRANK_PROGRAM_ID};
 
@@ -18,7 +18,41 @@ pub struct ArenaAccount {
     pub max_ticks: u64,
     pub entry_fee: u64,
     pub winners: u8,
+    pub started_at: i64,
     pub bump: u8,
+}
+
+impl ArenaAccount {
+    pub fn finalize(&mut self, forced: bool) -> Result<()> {
+        self.status = ArenaStatus::Finished;
+
+        let n = self.players.len();
+        let mut winners = 0u8;
+
+        if forced {
+            for (i, b) in self.bots[..n].iter().enumerate() {
+                if b.active {
+                    winners |= 1u8 << i;
+                }
+            }
+        } else {
+            let top = self.bots[..n]
+                .iter()
+                .filter(|b| b.active)
+                .map(|b| b.score)
+                .max()
+                .ok_or(ArenaError::NoActiveBots)?;
+            for (i, b) in self.bots[..n].iter().enumerate() {
+                if b.active && b.score == top {
+                    winners |= 1u8 << i;
+                }
+            }
+        }
+
+        require!(winners != 0, ArenaError::NoActiveBots);
+        self.winners = winners;
+        Ok(())
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, PartialEq, Eq, Debug)]

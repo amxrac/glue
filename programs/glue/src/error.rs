@@ -60,4 +60,6 @@ pub enum ArenaError {
     InvalidWinnerAccounts,
     #[msg("Match Not Timed Out")]
     MatchNotTimedOut,
+    #[msg("Name Too Long")]
+    NameTooLong,
 }

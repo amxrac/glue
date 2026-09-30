@@ -1,6 +1,6 @@
 use std::vec;
 
-use crate::{error::ArenaError, state::ArenaAccount, ArenaStatus};
+use crate::{error::ArenaError, state::*};
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
 
@@ -19,7 +19,7 @@ pub struct JoinArena<'info> {
 }
 
 impl<'info> JoinArena<'info> {
-    pub fn join_arena(&mut self) -> Result<()> {
+    pub fn join_arena(&mut self, name: String) -> Result<()> {
         require!(
             self.arena_account.status == ArenaStatus::Waiting,
             ArenaError::ArenaNotJoinable
@@ -29,6 +29,8 @@ impl<'info> JoinArena<'info> {
             !self.arena_account.players.contains(&self.player.key()),
             ArenaError::PlayerAlreadyInArena
         );
+
+        let player_name = encode_name(&name)?;
 
         let cpi_accounts = Transfer {
             from: self.player.to_account_info(),
@@ -41,13 +43,14 @@ impl<'info> JoinArena<'info> {
 
         let slot = self.arena_account.players.len();
         self.arena_account.players.push(self.player.key());
+        self.arena_account.names[slot] = player_name;
         self.arena_account.bots[slot].active = true;
 
         Ok(())
     }
 }
 
-pub fn handler(ctx: Context<JoinArena>, _id: u64) -> Result<()> {
-    ctx.accounts.join_arena()?;
+pub fn handler(ctx: Context<JoinArena>, _id: u64, name: String) -> Result<()> {
+    ctx.accounts.join_arena(name)?;
     Ok(())
 }

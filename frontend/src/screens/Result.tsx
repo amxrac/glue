@@ -3,6 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
 import { getPrograms, readBase, connBase, PROGRAM_ID } from "../lib/anchor";
 import { waitFor } from "../lib/waitFor";
+import { displayName } from "../lib/names";
 
 type Action =
   | { kind: "button"; label: string; fn: () => Promise<void> }
@@ -12,8 +13,6 @@ type Action =
 function leadersOf(a: any): PublicKey[] {
   return (a.players as PublicKey[]).filter((_, i) => (a.winners & (1 << i)) !== 0);
 }
-
-const short = (k: string) => `${k.slice(0, 4)}…${k.slice(-4)}`;
 
 export function Result({ arena, pda, wallet, onDone }: {
   arena: any; pda: PublicKey; wallet: AnchorWallet; onDone: () => void;
@@ -29,15 +28,19 @@ export function Result({ arena, pda, wallet, onDone }: {
   const me = wallet.publicKey.toBase58();
   const players: PublicKey[] = arena.players;
   const leaders = leadersOf(arena).map((p) => p.toBase58());
+  const leaderIdx = players
+    .map((_, i) => i)
+    .filter((i) => (arena.winners & (1 << i)) !== 0);
   const isWinner = leaders.includes(me);
   const tie = leaders.length > 1;
+  const forced = arena.tick.lt(arena.maxTicks);
 
   useEffect(() => {
     let cancelled = false;
     const check = () => {
       connBase.getAccountInfo(pda).then((i) => {
         if (!cancelled) setDelegated(i !== null && !i.owner.equals(PROGRAM_ID));
-      }).catch(() => {  });
+      }).catch(() => { });
     };
     check();
     const t = setInterval(check, 1000);
@@ -104,15 +107,19 @@ export function Result({ arena, pda, wallet, onDone }: {
 
   const box: React.CSSProperties = { maxWidth: 480, margin: "0 auto", padding: 12 };
   const potSol = (arena.entryFee.toNumber() * players.length) / 1e9;
-  const subtitle = tie
-    ? `Tie — pot split ${leaders.length} ways`
-    : !isWinner && leaders[0] ? `${short(leaders[0])} won` : null;
+
+  const heading = forced
+    ? "Match timed out"
+    : isWinner ? (tie ? "You tied" : "You won") : "Match over";
+  const subtitle = forced
+    ? `Pot split equally between ${leaders.length} players`
+    : tie
+      ? `Tie — pot split ${leaders.length} ways`
+      : !isWinner && leaderIdx.length > 0 ? `${displayName(arena, leaderIdx[0])} won` : null;
 
   return (
     <div style={box}>
-      <h2 style={{ fontSize: 20, margin: "0 0 4px" }}>
-        {isWinner ? (tie ? "You tied" : "You won") : "Match over"}
-      </h2>
+      <h2 style={{ fontSize: 20, margin: "0 0 4px" }}>{heading}</h2>
 
       {subtitle && (
         <p style={{ fontSize: 13, opacity: 0.8, margin: "0 0 8px" }}>{subtitle}</p>
@@ -122,7 +129,7 @@ export function Result({ arena, pda, wallet, onDone }: {
         const k = p.toBase58();
         return (
           <div key={k} style={{ display: "flex", padding: "7px 0", borderTop: "1px solid #ddd", fontSize: 13 }}>
-            <span>{k === me ? "you" : short(k)}</span>
+            <span>{displayName(arena, i)}{k === me ? " (you)" : ""}</span>
             <span style={{ marginLeft: "auto", fontFamily: "monospace" }}>
               {arena.bots[i].score.toNumber()}
             </span>

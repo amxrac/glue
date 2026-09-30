@@ -48,6 +48,14 @@ impl<'info> AdvanceSimulation<'info> {
 
     fn update_bots(&mut self) -> Result<()> {
         let resources = self.arena_account.resources;
+        let tick = self.arena_account.tick;
+
+        if tick % 8 == 0 {
+            for bot in self.arena_account.bots.iter_mut() {
+                bot.flip_x = false;
+                bot.flip_y = false;
+            }
+        }
 
         for bot_index in 0..self.arena_account.bots.len() {
             if !self.arena_account.bots[bot_index].active {
@@ -55,7 +63,6 @@ impl<'info> AdvanceSimulation<'info> {
             }
 
             let bot = self.arena_account.bots[bot_index];
-
             let vision = bot.vision as i32;
             let vision_sq = vision * vision;
             let speed = bot.speed as i16;
@@ -85,13 +92,37 @@ impl<'info> AdvanceSimulation<'info> {
                         .arena_account
                         .vrf_seed
                         .ok_or(ArenaError::RandomnessNotReady)?;
-                    let epoch = self.arena_account.tick / 8;
+                    let epoch = tick / 8;
                     let h = hashv(&[
                         &seed,
                         &(bot_index as u8).to_le_bytes(),
                         &epoch.to_le_bytes(),
                     ]);
-                    let (dx, dy) = DIRECTIONS[(h.to_bytes()[0] % 8) as usize];
+                    let (mut dx, mut dy) = DIRECTIONS[(h.to_bytes()[0] % 8) as usize];
+
+                    let mut flip_x = bot.flip_x;
+                    let mut flip_y = bot.flip_y;
+                    if flip_x {
+                        dx = -dx;
+                    }
+                    if flip_y {
+                        dy = -dy;
+                    }
+
+                    let step_x = bot.x + dx * speed;
+                    if step_x < 0 || step_x > MAP_WIDTH - 1 {
+                        dx = -dx;
+                        flip_x = !flip_x;
+                    }
+                    let step_y = bot.y + dy * speed;
+                    if step_y < 0 || step_y > MAP_HEIGHT - 1 {
+                        dy = -dy;
+                        flip_y = !flip_y;
+                    }
+
+                    self.arena_account.bots[bot_index].flip_x = flip_x;
+                    self.arena_account.bots[bot_index].flip_y = flip_y;
+
                     (bot.x + dx * speed, bot.y + dy * speed)
                 }
             };
@@ -105,13 +136,12 @@ impl<'info> AdvanceSimulation<'info> {
             if dx != 0 {
                 new_x += dx.signum() * speed.min(dx.abs());
             }
-
             if dy != 0 {
                 new_y += dy.signum() * speed.min(dy.abs());
             }
 
-            new_x = new_x.clamp(0, (MAP_WIDTH - 1) as i16);
-            new_y = new_y.clamp(0, (MAP_HEIGHT - 1) as i16);
+            new_x = new_x.clamp(0, MAP_WIDTH - 1);
+            new_y = new_y.clamp(0, MAP_HEIGHT - 1);
 
             if coordinate_occupied(
                 &self.arena_account,

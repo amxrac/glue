@@ -21,7 +21,6 @@ impl<'info> LeaveArena<'info> {
             arena.status == ArenaStatus::Waiting,
             ArenaError::ArenaAlreadyStarted
         );
-
         require!(self.player.key() != arena.host, ArenaError::HostCannotLeave);
 
         let idx = arena
@@ -30,6 +29,10 @@ impl<'info> LeaveArena<'info> {
             .position(|p| *p == self.player.key())
             .ok_or(ArenaError::NotAPlayer)?;
         arena.players.remove(idx);
+
+        arena.names.copy_within(idx + 1.., idx);
+        let last = arena.names.len() - 1;
+        arena.names[last] = [0u8; 32];
 
         let n = arena.players.len();
         for (i, bot) in arena.bots.iter_mut().enumerate() {

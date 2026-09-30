@@ -24,7 +24,7 @@ function Home() {
   const [starting, setStarting] = useState(false);
 
   const wallet = useAnchorWallet();
-    const { arena, error, closed, lastStatus } = useArena(pda, 1500);
+  const { arena, error, closed, lastStatus, delegated } = useArena(pda, 1500);
 
   if (!wallet) return <WalletMultiButton />;
 
@@ -40,17 +40,17 @@ function Home() {
     return (
       <div style={box}>
         <p>
-            {lastStatus === "finished"
-              ? "Match complete. Prize claimed and arena closed."
-              : "Arena cancelled. Entry fees refunded."}
-          </p>
+          {lastStatus === "finished"
+            ? "Match complete. Prize claimed and arena closed."
+            : "Arena cancelled. Entry fees refunded."}
+        </p>
         <button onClick={reset}>New arena</button>
       </div>
     );
   }
 
   if (status === "running" && !starting) {
-    return <Arena arena={arena} pda={pda!} wallet={wallet} />;
+    return <Arena arena={arena} pda={pda!} wallet={wallet} delegated={delegated} />;
   }
   if (status === "finished") {
     return <Result arena={arena} pda={pda!} wallet={wallet} onDone={() => {}} />;

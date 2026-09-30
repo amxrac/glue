@@ -9,6 +9,7 @@ pub struct ArenaAccount {
     pub host: Pubkey,
     #[max_len(6)]
     pub players: Vec<Pubkey>,
+    pub names: [[u8; 32]; 6],
     pub bots: [Bot; 6],
     pub status: ArenaStatus,
     pub vrf_seed: Option<[u8; 32]>,
@@ -71,6 +72,8 @@ pub struct Bot {
     pub score: u64,
     pub credits: u64,
     pub active: bool,
+    pub flip_x: bool,
+    pub flip_y: bool,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, Copy, Default)]
@@ -95,7 +98,17 @@ pub const fn default_bot() -> Bot {
         score: 0,
         credits: 0,
         active: false,
+        flip_x: false,
+        flip_y: false,
     }
+}
+
+pub fn encode_name(name: &str) -> Result<[u8; 32]> {
+    let bytes = name.as_bytes();
+    require!(bytes.len() <= MAX_NAME_LEN, ArenaError::NameTooLong);
+    let mut out = [0u8; 32];
+    out[..bytes.len()].copy_from_slice(bytes);
+    Ok(out)
 }
 
 pub fn coordinate_occupied(

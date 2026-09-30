@@ -410,6 +410,54 @@
       ]
     },
     {
+      "name": "force_finish",
+      "discriminator": [
+        158,
+        112,
+        53,
+        246,
+        194,
+        173,
+        108,
+        238
+      ],
+      "accounts": [
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "init_arena",
       "discriminator": [
         24,
@@ -466,6 +514,10 @@
         {
           "name": "entry_fee",
           "type": "u64"
+        },
+        {
+          "name": "name",
+          "type": "string"
         }
       ]
     },
@@ -523,6 +575,10 @@
         {
           "name": "id",
           "type": "u64"
+        },
+        {
+          "name": "name",
+          "type": "string"
         }
       ]
     },
@@ -1191,6 +1247,16 @@
       "code": 6027,
       "name": "InvalidWinnerAccounts",
       "msg": "Invalid Winner Accounts"
+    },
+    {
+      "code": 6028,
+      "name": "MatchNotTimedOut",
+      "msg": "Match Not Timed Out"
+    },
+    {
+      "code": 6029,
+      "name": "NameTooLong",
+      "msg": "Name Too Long"
     }
   ],
   "types": [
@@ -1211,6 +1277,20 @@
             "name": "players",
             "type": {
               "vec": "pubkey"
+            }
+          },
+          {
+            "name": "names",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                6
+              ]
             }
           },
           {
@@ -1277,6 +1357,10 @@
           {
             "name": "winners",
             "type": "u8"
+          },
+          {
+            "name": "started_at",
+            "type": "i64"
           },
           {
             "name": "bump",
@@ -1363,6 +1447,14 @@
           },
           {
             "name": "active",
+            "type": "bool"
+          },
+          {
+            "name": "flip_x",
+            "type": "bool"
+          },
+          {
+            "name": "flip_y",
             "type": "bool"
           }
         ]

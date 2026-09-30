@@ -416,6 +416,54 @@ export type Glue = {
       ]
     },
     {
+      "name": "forceFinish",
+      "discriminator": [
+        158,
+        112,
+        53,
+        246,
+        194,
+        173,
+        108,
+        238
+      ],
+      "accounts": [
+        {
+          "name": "arenaAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "arenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "initArena",
       "discriminator": [
         24,
@@ -472,6 +520,10 @@ export type Glue = {
         {
           "name": "entryFee",
           "type": "u64"
+        },
+        {
+          "name": "name",
+          "type": "string"
         }
       ]
     },
@@ -529,6 +581,10 @@ export type Glue = {
         {
           "name": "id",
           "type": "u64"
+        },
+        {
+          "name": "name",
+          "type": "string"
         }
       ]
     },
@@ -1197,6 +1253,16 @@ export type Glue = {
       "code": 6027,
       "name": "invalidWinnerAccounts",
       "msg": "Invalid Winner Accounts"
+    },
+    {
+      "code": 6028,
+      "name": "matchNotTimedOut",
+      "msg": "Match Not Timed Out"
+    },
+    {
+      "code": 6029,
+      "name": "nameTooLong",
+      "msg": "Name Too Long"
     }
   ],
   "types": [
@@ -1217,6 +1283,20 @@ export type Glue = {
             "name": "players",
             "type": {
               "vec": "pubkey"
+            }
+          },
+          {
+            "name": "names",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                6
+              ]
             }
           },
           {
@@ -1283,6 +1363,10 @@ export type Glue = {
           {
             "name": "winners",
             "type": "u8"
+          },
+          {
+            "name": "startedAt",
+            "type": "i64"
           },
           {
             "name": "bump",
@@ -1369,6 +1453,14 @@ export type Glue = {
           },
           {
             "name": "active",
+            "type": "bool"
+          },
+          {
+            "name": "flipX",
+            "type": "bool"
+          },
+          {
+            "name": "flipY",
             "type": "bool"
           }
         ]

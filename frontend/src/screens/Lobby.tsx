@@ -7,8 +7,19 @@ import {
   ENTRY_FEE, PROGRAM_ID, ORACLE_QUEUE, VALIDATOR, DELEGATION_PROGRAM, INTERVAL_MS,
 } from "../lib/anchor";
 import { waitFor } from "../lib/waitFor";
+import { displayName, nameByteLength, MAX_NAME_LEN } from "../lib/names";
 
 const MAGIC_PROGRAM = new PublicKey("Magic11111111111111111111111111111111111111");
+
+function parseSol(input: string): anchor.BN | null {
+  const s = input.trim();
+  if (!/^\d+(\.\d{1,9})?$/.test(s)) return null;
+  const [whole, frac = ""] = s.split(".");
+  const lamports = new anchor.BN(whole)
+    .mul(new anchor.BN(1_000_000_000))
+    .add(new anchor.BN(frac.padEnd(9, "0")));
+  return lamports.isZero() ? null : lamports;
+}
 
 export function Lobby({
   arena, pda, wallet, onCreated, onStarting,
@@ -23,7 +34,13 @@ export function Lobby({
   const [err, setErr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const stepRef = useRef<string | null>(null);
+  const [feeInput, setFeeInput] = useState(() => (ENTRY_FEE.toNumber() / 1e9).toString());
+  const [name, setName] = useState("");
   const me = wallet.publicKey.toBase58();
+
+  const fee = parseSol(feeInput);
+  const trimmedName = name.trim();
+  const nameValid = nameByteLength(trimmedName) <= MAX_NAME_LEN;
 
   const setStepBoth = (s: string | null) => { stepRef.current = s; setStep(s); };
 
@@ -36,10 +53,11 @@ export function Lobby({
   };
 
   async function create() {
+    if (!fee) throw new Error("invalid entry fee");
     const { programBase } = getPrograms(wallet);
     const id = new anchor.BN(Date.now() % 1_000_000);
     await programBase.methods
-      .initArena(id, ENTRY_FEE)
+      .initArena(id, fee, trimmedName)
       .accounts({ host: wallet.publicKey })
       .rpc();
     const p = arenaPda(wallet.publicKey, id, PROGRAM_ID);
@@ -50,7 +68,7 @@ export function Lobby({
   async function join() {
     const { programBase } = getPrograms(wallet);
     await programBase.methods
-      .joinArena(arena.id)
+      .joinArena(arena.id, trimmedName)
       .accountsPartial({ player: wallet.publicKey, arenaAccount: pda! })
       .rpc();
   }
@@ -130,11 +148,37 @@ export function Lobby({
   }
 
   const box: React.CSSProperties = { maxWidth: 480, margin: "0 auto", padding: 12 };
+  const input: React.CSSProperties = { width: "100%", boxSizing: "border-box", marginBottom: 6 };
+  const hint: React.CSSProperties = { color: "crimson", fontSize: 12, margin: "0 0 6px" };
+
+  const nameField = (
+    <>
+      <input
+        style={input}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Name (optional)"
+      />
+      {!nameValid && <p style={hint}>Name must be {MAX_NAME_LEN} bytes or fewer</p>}
+    </>
+  );
 
   if (!pda) {
     return (
       <div style={box}>
-        <button disabled={!!step} onClick={() => run("creating", create)}>
+        <label style={{ fontSize: 12, opacity: 0.7 }}>Entry fee (SOL)</label>
+        <input
+          style={input}
+          inputMode="decimal"
+          value={feeInput}
+          onChange={(e) => setFeeInput(e.target.value)}
+        />
+        {!fee && <p style={hint}>Enter an amount above 0 (up to 9 decimals)</p>}
+        {nameField}
+        <button
+          disabled={!!step || !fee || !nameValid}
+          onClick={() => run("creating", create)}
+        >
           {step ?? "Create arena"}
         </button>
         {err && <p style={{ color: "crimson", fontSize: 13 }}>{err}</p>}
@@ -165,18 +209,18 @@ export function Lobby({
         Entry {feeSol.toFixed(3)} SOL · pot {(feeSol * players.length).toFixed(3)} SOL
       </p>
 
-      {players.map((p) => {
+      {players.map((p, i) => {
         const k = p.toBase58();
         return (
           <div key={k} style={{ display: "flex", gap: 8, padding: "7px 0", borderTop: "1px solid #ddd", fontSize: 13 }}>
-            <span style={{ fontFamily: "monospace" }}>{k.slice(0, 4)}…{k.slice(-4)}</span>
+            <span>{displayName(arena, i)}</span>
             <span style={{ marginLeft: "auto", fontSize: 11, opacity: 0.6 }}>
-              {}
               {p.equals(arena.host) ? "host" : "joined"}{k === me ? " · you" : ""}
             </span>
           </div>
         );
       })}
+
       <p style={{ fontSize: 12, opacity: 0.7, margin: "10px 0" }}>
         {players.length} of {maxPlayers} joined
       </p>
@@ -186,11 +230,14 @@ export function Lobby({
       </button>
 
       {!joined && (
-        <button style={{ width: "100%", marginBottom: 6 }}
-          disabled={full || !!step}
-          onClick={() => run("joining", join)}>
-          {full ? "Arena full" : `Join · ${feeSol.toFixed(3)} SOL`}
-        </button>
+        <>
+          {!full && nameField}
+          <button style={{ width: "100%", marginBottom: 6 }}
+            disabled={full || !!step || !nameValid}
+            onClick={() => run("joining", join)}>
+            {full ? "Arena full" : `Join · ${feeSol.toFixed(3)} SOL`}
+          </button>
+        </>
       )}
 
       {isHost && (
@@ -216,6 +263,7 @@ export function Lobby({
           </button>
         </>
       )}
+
       {err && <p style={{ color: "crimson", fontSize: 13 }}>{err}</p>}
     </div>
   );

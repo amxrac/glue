@@ -7,6 +7,7 @@ export function useArena(pda: PublicKey | null, intervalMs = 400) {
   const [error, setError] = useState<string | null>(null);
   const [closedKey, setClosedKey] = useState<string | null>(null);
   const [lastStatus, setLastStatus] = useState<string | null>(null);
+  const [delegated, setDelegated] = useState(false);
 
   const pdaKey = pda?.toBase58();
   const delegatedRef = useRef(false);
@@ -25,6 +26,7 @@ export function useArena(pda: PublicKey | null, intervalMs = 400) {
             return;
           }
           delegatedRef.current = !info.owner.equals(PROGRAM_ID);
+          if (!cancelled) setDelegated(delegatedRef.current);
         }
         const program = delegatedRef.current ? readEr : readBase;
         const a = await program.account.arenaAccount.fetch(pda);
@@ -55,5 +57,6 @@ export function useArena(pda: PublicKey | null, intervalMs = 400) {
     error: pdaKey ? error : null,
     closed,
     lastStatus: pdaKey ? lastStatus : null,
+    delegated: pdaKey ? delegated : false,
   };
 }

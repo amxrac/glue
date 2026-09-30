@@ -22,8 +22,16 @@ pub struct InitArena<'info> {
 }
 
 impl<'info> InitArena<'info> {
-    pub fn init_arena(&mut self, id: u64, entry_fee: u64, bumps: &InitArenaBumps) -> Result<()> {
+    pub fn init_arena(
+        &mut self,
+        id: u64,
+        entry_fee: u64,
+        name: String,
+        bumps: &InitArenaBumps,
+    ) -> Result<()> {
         require!(entry_fee > 0, ArenaError::EntryFeeError);
+        let host_name = encode_name(&name)?;
+
         let cpi_accounts = Transfer {
             from: self.host.to_account_info(),
             to: self.arena_account.to_account_info(),
@@ -37,6 +45,11 @@ impl<'info> InitArena<'info> {
             id,
             host: self.host.key(),
             players: vec![self.host.key()],
+            names: {
+                let mut names = [[0u8; 32]; 6];
+                names[0] = host_name;
+                names
+            },
             bots: {
                 let mut bots = [default_bot(); 6];
                 bots[0].active = true;
@@ -58,7 +71,7 @@ impl<'info> InitArena<'info> {
     }
 }
 
-pub fn handler(ctx: Context<InitArena>, id: u64, entry_fee: u64) -> Result<()> {
-    ctx.accounts.init_arena(id, entry_fee, &ctx.bumps)?;
+pub fn handler(ctx: Context<InitArena>, id: u64, entry_fee: u64, name: String) -> Result<()> {
+    ctx.accounts.init_arena(id, entry_fee, name, &ctx.bumps)?;
     Ok(())
 }

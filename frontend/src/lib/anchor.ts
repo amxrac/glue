@@ -16,13 +16,10 @@ export const DELEGATION_PROGRAM = new PublicKey(
 );
 export const ORACLE_QUEUE = new PublicKey("Cuj97ggrhhidhbu39TijNVqE74xvKJ69gDervRUXAxGh");
 export const VALIDATOR = new PublicKey("MEUGGrYPxKk17hCr7wpT6s8dtNokZj5U2L57vjYMS8e");
-
 export const ENTRY_FEE = new anchor.BN(0.01 * LAMPORTS_PER_SOL);
-// export const MAX_TICKS = 550; (commented out because the on chain value is used instead)
-
+export const MAX_TICKS = 550;
 export const TASK_ID = new anchor.BN(1);
 export const INTERVAL_MS = new anchor.BN(100);
-// export const ITERATIONS = new anchor.BN(MAX_TICKS);
 export const PROGRAM_ID = new PublicKey((idl as Glue).address);
 export const MAP_WIDTH = 100;
 export const MAP_HEIGHT = 100;
@@ -45,11 +42,12 @@ export function arenaPda(host: PublicKey, id: anchor.BN, programId: PublicKey) {
 
 export function getPrograms(wallet: AnchorWallet) {
   const providerBase = new anchor.AnchorProvider(connBase, wallet, { commitment: "confirmed" });
-  const providerEr   = new anchor.AnchorProvider(connEr,   wallet, { commitment: "confirmed" });
+  const providerEr = new anchor.AnchorProvider(connEr, wallet, { commitment: "confirmed" });
   return {
     programBase: new Program<Glue>(idl as Glue, providerBase),
-    programEr:   new Program<Glue>(idl as Glue, providerEr),
+    programEr: new Program<Glue>(idl as Glue, providerEr),
   };
 }
+
 export const readBase = new Program<Glue>(idl as Glue, { connection: connBase });
-export const readEr   = new Program<Glue>(idl as Glue, { connection: connEr });
+export const readEr = new Program<Glue>(idl as Glue, { connection: connEr });

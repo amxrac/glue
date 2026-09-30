@@ -1,0 +1,130 @@
+.glue {
+  --text: #1f1e1d;
+  --on-text: #ffffff;
+  --muted: #6b6a66;
+  --surface: rgba(0, 0, 0, 0.04);
+  --border: rgba(0, 0, 0, 0.14);
+  --accent: #185fa5;
+  --accent-bg: #e6f1fb;
+  --danger: #a32d2d;
+  --radius: 8px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-align: left;
+}
+@media (prefers-color-scheme: dark) {
+  .glue {
+    --text: #f1efe8;
+    --on-text: #1f1e1d;
+    --muted: #a8a69e;
+    --surface: rgba(255, 255, 255, 0.06);
+    --border: rgba(255, 255, 255, 0.16);
+    --accent: #85b7eb;
+    --accent-bg: rgba(55, 138, 221, 0.18);
+    --danger: #f09595;
+  }
+}
+
+.glue h1 { font-size: 28px; font-weight: 600; line-height: 1.2; margin: 12px 0 8px; }
+.glue h2 { font-size: 18px; font-weight: 600; margin: 0 0 8px; }
+.glue p { line-height: 1.6; }
+.glue .muted { color: var(--muted); }
+.glue .small { font-size: 12px; }
+.glue .error { color: var(--danger); font-size: 13px; }
+
+.glue button:not(.wallet-adapter-button) {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.glue button:not(.wallet-adapter-button):hover:not(:disabled) {
+  background: var(--surface);
+  border-color: var(--muted);
+}
+.glue button:not(.wallet-adapter-button):disabled { opacity: 0.5; cursor: not-allowed; }
+.glue button.btn-primary:not(.wallet-adapter-button) {
+  background: var(--text);
+  color: var(--on-text);
+  border-color: transparent;
+}
+.glue button.btn-primary:not(.wallet-adapter-button):hover:not(:disabled) {
+  background: var(--text);
+  opacity: 0.88;
+}
+
+.glue input {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+}
+.glue input:focus-visible,
+.glue button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; min-height: 40px; }
+.brand { font-weight: 600; font-size: 18px; }
+.card { border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; }
+.pill {
+  display: inline-block; font-size: 12px; padding: 3px 10px;
+  border-radius: var(--radius); background: var(--accent-bg); color: var(--accent);
+}
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+
+.landing { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 24px; align-items: center; }
+@media (max-width: 560px) {
+  .landing { grid-template-columns: 1fr; }
+  .board-preview { max-width: 240px; }
+}
+.facts { list-style: none; padding: 0; margin: 12px 0 0; font-size: 14px; color: var(--muted); line-height: 1.9; }
+.facts strong { color: var(--text); font-weight: 600; }
+.board-preview {
+  position: relative; aspect-ratio: 1; width: 100%;
+  background: #141412; border-radius: 12px; overflow: hidden;
+}
+.board-preview .bot {
+  position: absolute; width: 12px; height: 12px; border-radius: 50%;
+  animation: drift 6s ease-in-out infinite alternate;
+}
+.board-preview .res { position: absolute; width: 6px; height: 6px; background: #ef9f27; }
+@keyframes drift { from { transform: translate(0, 0); } to { transform: translate(18px, -14px); } }
+@media (prefers-reduced-motion: reduce) { .board-preview .bot { animation: none; } }
+.how { margin-top: 24px; }
+.how ol { padding-left: 20px; line-height: 1.8; margin: 8px 0; }
+.join-row { display: flex; gap: 8px; margin-top: 28px; }
+.join-row input { flex: 1; }
+
+.timer { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
+.timer-value { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 22px; font-weight: 600; }
+.progress { height: 6px; border-radius: 3px; background: var(--surface); overflow: hidden; margin-bottom: 12px; }
+.progress-fill { height: 100%; background: var(--accent); transition: width 0.15s linear; }
+
+.list-head { display: flex; font-size: 11px; color: var(--muted); padding: 12px 0 4px; }
+.player-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 13px; }
+.swatch { width: 10px; height: 10px; border-radius: 5px; flex-shrink: 0; }
+
+.upgrade-head { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 0 8px; }
+.upgrades { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.glue button.upgrade:not(.wallet-adapter-button) {
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  text-align: left; padding: 12px; border-radius: 12px;
+}
+.upgrade-top { display: flex; justify-content: space-between; align-items: center; }
+.upgrade-name { font-weight: 600; }
+.cost {
+  font-size: 12px; padding: 2px 8px; border-radius: var(--radius);
+  background: var(--accent-bg); color: var(--accent);
+}

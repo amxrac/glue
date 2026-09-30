@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicKey } from "@solana/web3.js";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
-import { getPrograms } from "../lib/anchor";
+import { getPrograms, INTERVAL_MS } from "../lib/anchor";
 import { Grid } from "../components/Grid";
 import { BOT_COLOURS } from "../lib/colours";
 import { displayName } from "../lib/names";
@@ -12,27 +12,75 @@ const SPEED_AMOUNT = 1;
 const VISION_AMOUNT = 1;
 const MATCH_TIMEOUT_SECS = 200;
 const CLOCK_MARGIN_SECS = 10;
+const MS_PER_TICK = INTERVAL_MS.toNumber();
+const STALL_MS = 3000;
+const CLOCK_TICK_MS = 500;
+
+type Pending = "speed" | "vision" | "force" | null;
 
 function statusOf(arena: any): string {
   return Object.keys(arena.status)[0];
+}
+
+function formatClock(totalSecs: number): string {
+  const m = Math.floor(totalSecs / 60);
+  const s = totalSecs % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function UpgradeCard({ name, cost, credits, effect, pending, disabled, onClick }: {
+  name: string;
+  cost: number;
+  credits: number;
+  effect: string;
+  pending: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}) {
+  const short = cost - credits;
+  const affordable = short <= 0;
+  return (
+    <button className="upgrade" disabled={disabled || !affordable} onClick={onClick}>
+      <span className="upgrade-top">
+        <span className="upgrade-name">{name}</span>
+        <span className="cost">{cost} cr</span>
+      </span>
+      <span className="muted small">
+        {pending ? "Upgrading…" : affordable ? effect : `Need ${short} more credits`}
+      </span>
+    </button>
+  );
 }
 
 export function Arena({ arena, pda, wallet, delegated }: {
   arena: any; pda: PublicKey; wallet: AnchorWallet; delegated: boolean;
 }) {
   const { programBase, programEr } = useMemo(() => getPrograms(wallet), [wallet]);
-  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState<Pending>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [nowSec, setNowSec] = useState(0);
+  const [stalled, setStalled] = useState(false);
+
+  const tick = arena ? arena.tick.toNumber() : 0;
+  const lastAdvanceAt = useRef(0);
   useEffect(() => {
-    const t = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
-    return () => clearInterval(t);
+    lastAdvanceAt.current = Date.now();
+  }, [tick]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const t = Date.now();
+      setNowSec(Math.floor(t / 1000));
+      setStalled(lastAdvanceAt.current > 0 && t - lastAdvanceAt.current > STALL_MS);
+    }, CLOCK_TICK_MS);
+    return () => clearInterval(id);
   }, []);
 
-  if (!arena) return <p>loading…</p>;
+  if (!arena) return <p className="muted">Loading…</p>;
 
   const status = statusOf(arena);
+  const running = status === "running";
   const myKey = wallet.publicKey.toBase58();
 
   const myIndex = arena.players.findIndex(
@@ -41,121 +89,127 @@ export function Arena({ arena, pda, wallet, delegated }: {
   const myBot = myIndex >= 0 ? arena.bots[myIndex] : null;
   const credits = myBot ? myBot.credits.toNumber() : 0;
 
+  const maxTicks = arena.maxTicks.toNumber();
+  const ticksLeft = Math.max(0, maxTicks - tick);
+  const secsLeft = Math.ceil((ticksLeft * MS_PER_TICK) / 1000);
+  const progressPct = Math.min(100, (tick / maxTicks) * 100);
+
   const deadline = arena.startedAt.toNumber() + MATCH_TIMEOUT_SECS + CLOCK_MARGIN_SECS;
-  const canForce = status === "running" && now >= deadline;
+  const canForce = running && nowSec > 0 && nowSec >= deadline;
 
-  async function upgrade(kind: "speed" | "vision") {
-    setBusy(true);
+  async function run(kind: Exclude<Pending, null>, fn: () => Promise<unknown>) {
+    setPending(kind);
     setErr(null);
     try {
-      const builder =
-        kind === "speed"
-          ? programEr.methods.upgradeBot(arena.id, { speed: {} })
-          : programEr.methods.upgradeBot(arena.id, { vision: {} });
-
-      await builder
-        .accountsPartial({ player: wallet.publicKey, arenaAccount: pda })
-        .rpc();
-    } catch (e: any) {
-      setErr(String(e.message ?? e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function forceFinish() {
-    setBusy(true);
-    setErr(null);
-    try {
-      const program = delegated ? programEr : programBase;
-      await program.methods
-        .forceFinish(arena.id)
-        .accountsPartial({ arenaAccount: pda })
-        .rpc();
+      await fn();
     } catch (e: any) {
       const msg = String(e.message ?? e);
       setErr(
-        /MatchNotTimedOut/.test(msg)
-          ? "Not timed out on-chain yet. Try again in a few seconds."
-          : msg
+        /MatchNotTimedOut/.test(msg) ? "Not timed out on-chain yet. Try again in a few seconds."
+        : /InsufficientCredits/.test(msg) ? "Not enough credits yet."
+        : msg
       );
     } finally {
-      setBusy(false);
+      setPending(null);
     }
   }
 
+  const upgrade = (kind: "speed" | "vision") =>
+    run(kind, () =>
+      programEr.methods
+        .upgradeBot(arena.id, kind === "speed" ? { speed: {} } : { vision: {} })
+        .accountsPartial({ player: wallet.publicKey, arenaAccount: pda })
+        .rpc()
+    );
+
+  const forceFinish = () =>
+    run("force", () =>
+      (delegated ? programEr : programBase).methods
+        .forceFinish(arena.id)
+        .accountsPartial({ arenaAccount: pda })
+        .rpc()
+    );
+
   return (
-    <div style={{ maxWidth: 480, margin: "0 auto", padding: 12 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
-        <span style={{ fontFamily: "monospace", fontSize: 18 }}>
-          {arena.tick.toNumber()}
-        </span>
-        <span style={{ fontSize: 12, opacity: 0.6 }}>/ {arena.maxTicks.toNumber()} ticks</span>
-        <span style={{ marginLeft: "auto", fontSize: 12 }}>{status}</span>
+    <div style={{ maxWidth: 480, margin: "0 auto" }}>
+      <div className="timer">
+        <span className="timer-value">{formatClock(secsLeft)}</span>
+        <span className="muted small">{running && stalled ? "Waiting for the network…" : "left in match"}</span>
+      </div>
+      <div
+        className="progress"
+        role="progressbar"
+        aria-label="Match progress"
+        aria-valuemin={0}
+        aria-valuemax={maxTicks}
+        aria-valuenow={tick}
+      >
+        <div className="progress-fill" style={{ width: `${progressPct}%` }} />
       </div>
 
-      <div style={{ marginBottom: 12 }}>
-        <Grid arena={arena} myIndex={myIndex} />
-      </div>
+      <Grid arena={arena} myIndex={myIndex} />
+      <p className="muted small" style={{ margin: "6px 0 0" }}>
+        Circles show each bot's field of vision.
+      </p>
 
-      <div style={{ display: "flex", fontSize: 11, opacity: 0.6, paddingBottom: 4 }}>
-        <span>player</span>
-        <span style={{ marginLeft: "auto" }}>score</span>
+      <div className="list-head">
+        <span>Player</span>
+        <span style={{ marginLeft: "auto" }}>Score</span>
       </div>
-
       {arena.players.map((p: PublicKey, i: number) => {
         const key = p.toBase58();
-        const bot = arena.bots[i];
         return (
-          <div
-            key={key}
-            style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "6px 0", borderTop: "1px solid #ddd",
-            }}
-          >
-            <span style={{
-              width: 10, height: 10, borderRadius: 5,
-              background: BOT_COLOURS[i % BOT_COLOURS.length], flexShrink: 0,
-            }} />
-            <span style={{ fontSize: 13 }}>
-              {displayName(arena, i)}{key === myKey ? " (you)" : ""}
-            </span>
+          <div key={key} className="player-row">
+            <span className="swatch" style={{ background: BOT_COLOURS[i % BOT_COLOURS.length] }} />
+            <span>{displayName(arena, i)}{key === myKey ? " (you)" : ""}</span>
             <span style={{ marginLeft: "auto", fontFamily: "monospace" }}>
-              {bot.score.toNumber()}
+              {arena.bots[i].score.toNumber()}
             </span>
           </div>
         );
       })}
 
-      {myBot && status === "running" && (
+      {myBot && running && (
         <>
-          <div style={{ fontSize: 12, opacity: 0.7, margin: "12px 0 6px" }}>
-            credits {credits}
+          <div className="upgrade-head">
+            <span className="muted small">Your bot</span>
+            <span><strong>{credits}</strong> <span className="muted small">credits</span></span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-            <button disabled={busy || credits < SPEED_COST} onClick={() => upgrade("speed")}>
-              Speed {myBot.speed} → {myBot.speed + SPEED_AMOUNT} · {SPEED_COST} cr
-            </button>
-            <button disabled={busy || credits < VISION_COST} onClick={() => upgrade("vision")}>
-              Vision {myBot.vision} → {myBot.vision + VISION_AMOUNT} · {VISION_COST} cr
-            </button>
+          <div className="upgrades">
+            <UpgradeCard
+              name="Speed"
+              cost={SPEED_COST}
+              credits={credits}
+              effect={`${myBot.speed} → ${myBot.speed + SPEED_AMOUNT}`}
+              pending={pending === "speed"}
+              disabled={pending !== null}
+              onClick={() => upgrade("speed")}
+            />
+            <UpgradeCard
+              name="Vision"
+              cost={VISION_COST}
+              credits={credits}
+              effect={`${myBot.vision} → ${myBot.vision + VISION_AMOUNT}`}
+              pending={pending === "vision"}
+              disabled={pending !== null}
+              onClick={() => upgrade("vision")}
+            />
           </div>
         </>
       )}
 
       {canForce && (
-        <div style={{ marginTop: 12 }}>
-          <p style={{ fontSize: 12, opacity: 0.7, margin: "0 0 6px" }}>
+        <div className="card" style={{ marginTop: 16 }}>
+          <p className="muted small" style={{ margin: "0 0 8px" }}>
             Match stalled. Anyone can end it; the pot is split equally.
           </p>
-          <button style={{ width: "100%" }} disabled={busy} onClick={forceFinish}>
-            {busy ? "Ending match…" : "Force finish"}
+          <button className="btn-primary" style={{ width: "100%" }} disabled={pending !== null} onClick={forceFinish}>
+            {pending === "force" ? "Ending match…" : "Force finish"}
           </button>
         </div>
       )}
 
-      {err && <p style={{ color: "crimson", fontSize: 13 }}>{err}</p>}
+      {err && <p className="error">{err}</p>}
     </div>
   );
 }

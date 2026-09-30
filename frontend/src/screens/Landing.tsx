@@ -1,0 +1,134 @@
+import { useState } from "react";
+import { PublicKey } from "@solana/web3.js";
+import { INTERVAL_MS, MAX_TICKS } from "../lib/anchor";
+
+const REWARD = 10;
+const UPGRADE_COST = 10;
+const TIMEOUT_SECS = 200;
+const MATCH_SECS = Math.round((MAX_TICKS * INTERVAL_MS.toNumber()) / 1000);
+
+export function parseArenaInput(input: string): PublicKey | null {
+  const s = input.trim();
+  if (!s) return null;
+  let candidate = s;
+  try {
+    candidate = new URL(s).searchParams.get("arena") ?? "";
+  } catch {
+    // not a URL
+  }
+  try {
+    return new PublicKey(candidate);
+  } catch {
+    return null;
+  }
+}
+
+const PREVIEW_BOTS = [
+  { left: "20%", top: "30%", color: "#378ADD", delay: "0s" },
+  { left: "62%", top: "22%", color: "#D85A30", delay: "-2s" },
+  { left: "45%", top: "68%", color: "#1D9E75", delay: "-4s" },
+  { left: "76%", top: "58%", color: "#7F77DD", delay: "-1s" },
+];
+const PREVIEW_RES = [
+  ["30%", "42%"], ["55%", "36%"], ["70%", "80%"], ["15%", "75%"], ["85%", "15%"], ["38%", "12%"],
+];
+
+function BoardPreview() {
+  return (
+    <div className="board-preview" aria-hidden="true">
+      {PREVIEW_RES.map(([left, top]) => (
+        <span key={`${left}-${top}`} className="res" style={{ left, top }} />
+      ))}
+      {PREVIEW_BOTS.map((b) => (
+        <span
+          key={b.color}
+          className="bot"
+          style={{ left: b.left, top: b.top, background: b.color, animationDelay: b.delay }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function HowItWorks() {
+  return (
+    <section className="how card" id="how-it-works">
+      <h2>How a match works</h2>
+      <ol>
+        <li>The host sets an entry fee and shares the invite link.</li>
+        <li>Up to 6 players join. Each entry fee goes into the pot.</li>
+        <li>Bots spawn and hunt resources on their own. You never steer.</li>
+        <li>After about {MATCH_SECS} seconds, the highest score takes the pot.</li>
+      </ol>
+      <p className="muted" style={{ fontSize: 14, margin: 0 }}>
+        The circle around each bot is its field of vision: it heads for the nearest resource
+        inside it, and wanders when nothing is in sight. Each resource is worth {REWARD} points
+        and {REWARD} credits. Upgrades cost {UPGRADE_COST} credits and never lower your score.
+        Ties split the pot. If a match stalls for {TIMEOUT_SECS} seconds, anyone can end it and
+        the pot is split equally.
+      </p>
+    </section>
+  );
+}
+
+export function Landing({ onCreate, onJoin }: {
+  onCreate: () => void;
+  onJoin: (pda: PublicKey) => void;
+}) {
+  const [showHow, setShowHow] = useState(false);
+  const [link, setLink] = useState("");
+  const [linkErr, setLinkErr] = useState<string | null>(null);
+
+  function join() {
+    const pda = parseArenaInput(link);
+    if (!pda) {
+      setLinkErr("That isn't a valid invite link.");
+      return;
+    }
+    onJoin(pda);
+  }
+
+  return (
+    <div>
+      <div className="landing">
+        <div>
+          <span className="pill">About 1 minute per match</span>
+          <h1>Back a bot, not a joystick</h1>
+          <p className="muted" style={{ margin: 0 }}>
+            Bots move by themselves. Your only move is when to spend: more speed, or a wider
+            field of vision.
+          </p>
+          <ul className="facts">
+            <li><strong>Speed</strong> moves more cells each step</li>
+            <li><strong>Vision</strong> is the circle around your bot. It goes after the nearest resource inside it</li>
+            <li><strong>Score</strong> never drops. Credits do when you spend</li>
+          </ul>
+          <div className="actions">
+            <button className="btn-primary" onClick={onCreate}>Create arena</button>
+            <button
+              onClick={() => setShowHow((v) => !v)}
+              aria-expanded={showHow}
+              aria-controls="how-it-works"
+            >
+              {showHow ? "Hide how it works" : "How it works"}
+            </button>
+          </div>
+        </div>
+        <BoardPreview />
+      </div>
+
+      {showHow && <HowItWorks />}
+
+      <div className="join-row">
+        <input
+          value={link}
+          onChange={(e) => { setLink(e.target.value); setLinkErr(null); }}
+          placeholder="Paste an invite link"
+          aria-label="Invite link"
+        />
+        <button onClick={join}>Join</button>
+      </div>
+      {linkErr && <p className="error">{linkErr}</p>}
+    </div>
+  );
+}

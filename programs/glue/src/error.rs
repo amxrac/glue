@@ -62,4 +62,6 @@ pub enum ArenaError {
     MatchNotTimedOut,
     #[msg("Name Too Long")]
     NameTooLong,
+    #[msg("Randomness Already Set")]
+    RandomnessAlreadySet,
 }

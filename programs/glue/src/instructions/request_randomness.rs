@@ -9,7 +9,7 @@ use ephemeral_rollups_sdk::{
 };
 
 use crate::instruction::ConsumeRandomness;
-use crate::state::ArenaAccount;
+use crate::{error::*, state::*};
 
 #[vrf]
 #[derive(Accounts)]
@@ -38,6 +38,10 @@ pub struct RequestRandomnessCtx<'info> {
 
 impl<'info> RequestRandomnessCtx<'info> {
     pub fn request_randomness(&self, id: u64) -> Result<()> {
+        require!(
+            self.arena_account.vrf_seed.is_none(),
+            ArenaError::RandomnessAlreadySet
+        );
         msg!("Requesting VRF on base layer (id={})", id);
 
         let mut caller_seed = [0u8; 32];

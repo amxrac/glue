@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicKey } from "@solana/web3.js";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
-import { getPrograms, INTERVAL_MS } from "../lib/anchor";
+import { getPrograms, INTERVAL_MS, PROGRAM_ID } from "../lib/anchor";
 import { Grid } from "../components/Grid";
 import { BOT_COLOURS } from "../lib/colours";
 import { displayName } from "../lib/names";
+import {
+  isSessionUsable,
+  loadActiveSession,
+  renewSession,
+  sessionProgramEr,
+  sessionTokenPda,
+  type ActiveSession,
+} from "../lib/session";
 
 const SPEED_COST = 10;
 const VISION_COST = 10;
@@ -16,7 +24,10 @@ const MS_PER_TICK = INTERVAL_MS.toNumber();
 const STALL_MS = 3000;
 const CLOCK_TICK_MS = 500;
 
-type Pending = "speed" | "vision" | "force" | null;
+const SESSION_FAILURE =
+  /InvalidSessionToken|InvalidToken|NoToken|AccountNotInitialized|AccountDiscriminatorMismatch|prior credit|insufficient (funds|lamports)/i;
+
+type Pending = "speed" | "vision" | "force" | "renew" | null;
 
 function statusOf(arena: any): string {
   return Object.keys(arena.status)[0];
@@ -59,6 +70,14 @@ export function Arena({ arena, pda, wallet, delegated }: {
   const [pending, setPending] = useState<Pending>(null);
   const [err, setErr] = useState<string | null>(null);
 
+  const [session, setSession] = useState<ActiveSession | null>(() =>
+    loadActiveSession(pda, wallet.publicKey)
+  );
+  const programSession = useMemo(
+    () => (session ? sessionProgramEr(session.kp) : null),
+    [session]
+  );
+
   const [nowSec, setNowSec] = useState(0);
   const [stalled, setStalled] = useState(false);
 
@@ -97,6 +116,9 @@ export function Arena({ arena, pda, wallet, delegated }: {
   const deadline = arena.startedAt.toNumber() + MATCH_TIMEOUT_SECS + CLOCK_MARGIN_SECS;
   const canForce = running && nowSec > 0 && nowSec >= deadline;
 
+  const sessionOn = session !== null && nowSec > 0 && isSessionUsable(session.validUntil, nowSec);
+  const showEnable = !!myBot && running && nowSec > 0 && !sessionOn;
+
   async function run(kind: Exclude<Pending, null>, fn: () => Promise<unknown>) {
     setPending(kind);
     setErr(null);
@@ -115,12 +137,39 @@ export function Arena({ arena, pda, wallet, delegated }: {
   }
 
   const upgrade = (kind: "speed" | "vision") =>
-    run(kind, () =>
-      programEr.methods
+    run(kind, async () => {
+      const now = Math.floor(Date.now() / 1000);
+      if (session && programSession && isSessionUsable(session.validUntil, now)) {
+        try {
+          await programSession.methods
+            .upgradeBot(arena.id, kind === "speed" ? { speed: {} } : { vision: {} })
+            .accountsPartial({
+              signer: session.kp.publicKey,
+              playerWallet: wallet.publicKey,
+              sessionToken: sessionTokenPda(session.kp.publicKey, wallet.publicKey),
+              arenaAccount: pda,
+            })
+            .rpc();
+          return;
+        } catch (e: any) {
+          if (!SESSION_FAILURE.test(String(e?.message ?? e))) throw e;
+        }
+      }
+      await programEr.methods
         .upgradeBot(arena.id, kind === "speed" ? { speed: {} } : { vision: {} })
-        .accountsPartial({ player: wallet.publicKey, arenaAccount: pda })
-        .rpc()
-    );
+        .accountsPartial({
+          signer: wallet.publicKey,
+          playerWallet: wallet.publicKey,
+          sessionToken: PROGRAM_ID,
+          arenaAccount: pda,
+        })
+        .rpc();
+    });
+
+  const enableSession = () =>
+    run("renew", async () => {
+      setSession(await renewSession(wallet, pda));
+    });
 
   const forceFinish = () =>
     run("force", () =>
@@ -172,7 +221,7 @@ export function Arena({ arena, pda, wallet, delegated }: {
       {myBot && running && (
         <>
           <div className="upgrade-head">
-            <span className="muted small">Your bot</span>
+            <span className="muted small">{sessionOn ? "Instant upgrades on" : "Your bot"}</span>
             <span><strong>{credits}</strong> <span className="muted small">credits</span></span>
           </div>
           <div className="upgrades">
@@ -195,13 +244,20 @@ export function Arena({ arena, pda, wallet, delegated }: {
               onClick={() => upgrade("vision")}
             />
           </div>
+          {showEnable && (
+            <button style={{ width: "100%", marginTop: 8 }} disabled={pending !== null} onClick={enableSession}>
+              {pending === "renew"
+                ? "Enabling…"
+                : session ? "Renew instant upgrades" : "Enable instant upgrades"}
+            </button>
+          )}
         </>
       )}
 
       {canForce && (
         <div className="card" style={{ marginTop: 16 }}>
           <p className="muted small" style={{ margin: "0 0 8px" }}>
-            Match stalled. Anyone can end it; the pot is split equally.
+            Match stalled. Anyone can end it, and every entry fee is refunded.
           </p>
           <button className="btn-primary" style={{ width: "100%" }} disabled={pending !== null} onClick={forceFinish}>
             {pending === "force" ? "Ending match…" : "Force finish"}

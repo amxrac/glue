@@ -1036,7 +1036,7 @@ export type Glue = {
       ],
       "accounts": [
         {
-          "name": "player",
+          "name": "signer",
           "signer": true
         },
         {
@@ -1065,6 +1065,13 @@ export type Glue = {
               }
             ]
           }
+        },
+        {
+          "name": "playerWallet"
+        },
+        {
+          "name": "sessionToken",
+          "optional": true
         }
       ],
       "args": [
@@ -1263,6 +1270,16 @@ export type Glue = {
       "code": 6029,
       "name": "nameTooLong",
       "msg": "Name Too Long"
+    },
+    {
+      "code": 6030,
+      "name": "randomnessAlreadySet",
+      "msg": "Randomness Already Set"
+    },
+    {
+      "code": 6031,
+      "name": "invalidSessionToken",
+      "msg": "Invalid Session Token"
     }
   ],
   "types": [
@@ -1501,6 +1518,34 @@ export type Glue = {
           },
           {
             "name": "iterations",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "sessionTokenV2",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "targetProgram",
+            "type": "pubkey"
+          },
+          {
+            "name": "sessionSigner",
+            "type": "pubkey"
+          },
+          {
+            "name": "feePayer",
+            "type": "pubkey"
+          },
+          {
+            "name": "validUntil",
             "type": "i64"
           }
         ]

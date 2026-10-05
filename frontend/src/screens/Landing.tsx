@@ -100,8 +100,9 @@ export function Landing({ onCreate, onJoin }: {
           </p>
           <ul className="facts">
             <li><strong>Speed</strong> moves more cells each step</li>
+            <li><strong>Score</strong> never drops</li>
+            <li><strong>Credits</strong> drop when you spend</li>
             <li><strong>Vision</strong> is the circle around your bot. It goes after the nearest resource inside it</li>
-            <li><strong>Score</strong> never drops. Credits do when you spend</li>
           </ul>
           <div className="actions">
             <button className="btn-primary" onClick={onCreate}>Create arena</button>

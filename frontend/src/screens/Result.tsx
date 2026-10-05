@@ -45,7 +45,7 @@ export function Result({ arena, pda, wallet, onDone }: {
     check();
     const t = setInterval(check, 1000);
     return () => { cancelled = true; clearInterval(t); };
-  }, [pda.toBase58()]);
+  }, [pda]);
 
   async function settle() {
     const { programEr } = getPrograms(wallet);
@@ -54,7 +54,7 @@ export function Result({ arena, pda, wallet, onDone }: {
       return i !== null && i.owner.equals(PROGRAM_ID);
     };
 
-    setStepBoth("settling on rollup");
+    setStepBoth("Settling on rollup");
     try {
       await programEr.methods.settleArena(arena.id)
         .accountsPartial({ payer: wallet.publicKey, arenaAccount: pda })
@@ -62,18 +62,18 @@ export function Result({ arena, pda, wallet, onDone }: {
     } catch (e: any) {
       const msg = String(e?.message ?? e);
       if (/reject|ArenaNotFinished/i.test(msg)) throw e;
-      setStepBoth("returning to Solana");
+      setStepBoth("Returning to Solana");
       try { await waitFor("undelegation", backOnBase, 10_000); return; }
       catch { throw e; }
     }
 
-    setStepBoth("returning to Solana");
+    setStepBoth("Returning to Solana");
     await waitFor("undelegation", backOnBase);
   }
 
   async function claim() {
     const { programBase } = getPrograms(wallet);
-    setStepBoth("claiming prize");
+    setStepBoth(forced ? "Refunding" : "Claiming prize");
     const settled = await readBase.account.arenaAccount.fetch(pda);
     const winners = leadersOf(settled);
     if (winners.length === 0) throw new Error("no winners recorded on the settled arena");
@@ -93,42 +93,48 @@ export function Result({ arena, pda, wallet, onDone }: {
   async function act(fn: () => Promise<void>) {
     setErr(null);
     try { await fn(); }
-    catch (e: any) { setErr(`${stepRef.current ?? "error"}: ${String(e.message ?? e)}`); }
+    catch (e: any) { setErr(`${stepRef.current ?? "Error"}: ${String(e.message ?? e)}`); }
     finally { setStepBoth(null); }
   }
+
+  const claimLabel = forced ? "Claim refund" : "Claim prize";
+  const settleClaimLabel = forced ? "Settle and refund" : "Settle and claim";
 
   const action: Action =
     delegated === null ? null
     : delegated
-      ? isWinner ? { kind: "button", label: "Settle & claim", fn: settleAndClaim }
+      ? isWinner ? { kind: "button", label: settleClaimLabel, fn: settleAndClaim }
       : { kind: "button", label: "Settle", fn: settle }
-    : isWinner ? { kind: "button", label: "Claim prize", fn: claim }
+    : isWinner ? { kind: "button", label: claimLabel, fn: claim }
     : { kind: "note", text: "Settled. Waiting for a winner to claim…" };
 
-  const box: React.CSSProperties = { maxWidth: 480, margin: "0 auto", padding: 12 };
   const potSol = (arena.entryFee.toNumber() * players.length) / 1e9;
 
   const heading = forced
-    ? "Match timed out"
+    ? "Match ended early"
     : isWinner ? (tie ? "You tied" : "You won") : "Match over";
   const subtitle = forced
-    ? `Pot split equally between ${leaders.length} players`
+    ? "Match stalled, so every entry fee is refunded"
     : tie
-      ? `Tie — pot split ${leaders.length} ways`
+      ? `Tie. Pot split ${leaders.length} ways`
       : !isWinner && leaderIdx.length > 0 ? `${displayName(arena, leaderIdx[0])} won` : null;
 
   return (
-    <div style={box}>
-      <h2 style={{ fontSize: 20, margin: "0 0 4px" }}>{heading}</h2>
+    <div style={{ maxWidth: 480, margin: "0 auto" }}>
+      <h2 style={{ margin: "0 0 4px" }}>{heading}</h2>
 
       {subtitle && (
-        <p style={{ fontSize: 13, opacity: 0.8, margin: "0 0 8px" }}>{subtitle}</p>
+        <p className="muted" style={{ fontSize: 14, margin: "0 0 12px" }}>{subtitle}</p>
       )}
 
+      <div className="list-head">
+        <span>Player</span>
+        <span style={{ marginLeft: "auto" }}>Score</span>
+      </div>
       {players.map((p, i) => {
         const k = p.toBase58();
         return (
-          <div key={k} style={{ display: "flex", padding: "7px 0", borderTop: "1px solid #ddd", fontSize: 13 }}>
+          <div key={k} className="player-row">
             <span>{displayName(arena, i)}{k === me ? " (you)" : ""}</span>
             <span style={{ marginLeft: "auto", fontFamily: "monospace" }}>
               {arena.bots[i].score.toNumber()}
@@ -137,20 +143,20 @@ export function Result({ arena, pda, wallet, onDone }: {
         );
       })}
 
-      <p style={{ fontSize: 13, opacity: 0.8, margin: "12px 0" }}>
-        pot {potSol.toFixed(4)} SOL
+      <p className="muted" style={{ fontSize: 14, margin: "12px 0" }}>
+        {forced ? "Refunded" : "Pot"} {potSol.toFixed(4)} SOL
       </p>
 
       {action?.kind === "button" && (
-        <button style={{ width: "100%" }} disabled={!!step} onClick={() => act(action.fn)}>
-          {step ?? action.label}
+        <button className="btn-primary" style={{ width: "100%" }} disabled={!!step} onClick={() => act(action.fn)}>
+          {step ? `${step}…` : action.label}
         </button>
       )}
       {action?.kind === "note" && (
-        <p style={{ fontSize: 13, opacity: 0.7 }}>{action.text}</p>
+        <p className="muted" style={{ fontSize: 14 }}>{action.text}</p>
       )}
 
-      {err && <p style={{ color: "crimson", fontSize: 13 }}>{err}</p>}
+      {err && <p className="error">{err}</p>}
     </div>
   );
 }

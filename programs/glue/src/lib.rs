@@ -5,8 +5,10 @@ pub mod state;
 
 use anchor_lang::prelude::*;
 use ephemeral_rollups_sdk::anchor::ephemeral;
+use session_keys::{session_auth_or, SessionError};
 
 pub use constants::*;
+pub use error::*;
 pub use instructions::*;
 pub use state::*;
 
@@ -62,6 +64,10 @@ pub mod glue {
         instructions::advance_simulation::handler(ctx, id)
     }
 
+    #[session_auth_or(
+       ctx.accounts.signer.key() == ctx.accounts.player_wallet.key(),
+       SessionError::InvalidToken
+   )]
     pub fn upgrade_bot(ctx: Context<UpgradeBot>, id: u64, upgrade: UpgradeType) -> Result<()> {
         instructions::upgrade_bot::handler(ctx, id, upgrade)
     }

@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ConnectionProvider,
   WalletProvider,
@@ -17,6 +17,16 @@ import { Arena } from "./screens/Arena";
 import { Lobby } from "./screens/Lobby";
 import { Result } from "./screens/Result";
 import { Landing, parseArenaInput } from "./screens/Landing";
+import { sweepExpiredSessions } from "./lib/session";
+
+function useSessionSweep() {
+  useEffect(() => {
+    const sweep = () => { sweepExpiredSessions().catch(() => {}); };
+    sweep();
+    const id = setInterval(sweep, 60_000);
+    return () => clearInterval(id);
+  }, []);
+}
 
 function readArenaParam(): { pda: PublicKey | null; invalid: boolean } {
   const raw = new URLSearchParams(location.search).get("arena");
@@ -137,6 +147,7 @@ function Home() {
 
 export default function App() {
   const wallets = useMemo(() => [], []);
+  useSessionSweep();
 
   return (
     <ConnectionProvider endpoint={RPC_BASE}>

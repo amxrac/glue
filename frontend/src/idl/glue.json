@@ -1030,7 +1030,7 @@
       ],
       "accounts": [
         {
-          "name": "player",
+          "name": "signer",
           "signer": true
         },
         {
@@ -1059,6 +1059,13 @@
               }
             ]
           }
+        },
+        {
+          "name": "player_wallet"
+        },
+        {
+          "name": "session_token",
+          "optional": true
         }
       ],
       "args": [
@@ -1257,6 +1264,16 @@
       "code": 6029,
       "name": "NameTooLong",
       "msg": "Name Too Long"
+    },
+    {
+      "code": 6030,
+      "name": "RandomnessAlreadySet",
+      "msg": "Randomness Already Set"
+    },
+    {
+      "code": 6031,
+      "name": "InvalidSessionToken",
+      "msg": "Invalid Session Token"
     }
   ],
   "types": [
@@ -1495,6 +1512,34 @@
           },
           {
             "name": "iterations",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SessionTokenV2",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "target_program",
+            "type": "pubkey"
+          },
+          {
+            "name": "session_signer",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_payer",
+            "type": "pubkey"
+          },
+          {
+            "name": "valid_until",
             "type": "i64"
           }
         ]

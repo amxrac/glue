@@ -64,4 +64,6 @@ pub enum ArenaError {
     NameTooLong,
     #[msg("Randomness Already Set")]
     RandomnessAlreadySet,
+    #[msg("Invalid Session Token")]
+    InvalidSessionToken,
 }

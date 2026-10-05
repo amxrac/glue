@@ -1951,6 +1951,7 @@ dependencies = [
  "ephemeral-rollups-sdk",
  "litesvm",
  "magicblock-magic-program-api",
+ "session-keys",
  "solana-keypair",
  "solana-message 3.1.0",
  "solana-native-token 3.0.0",
@@ -3644,6 +3645,37 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "84d57bc0c8b9a17920c178daa6bb924850d54a9c97ab45194bb8c17ad66bb660"
 dependencies = [
  "darling",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "session-keys"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c22bb80c43cf7ff13790166c4f2aed099e3707cea31fcf359284fdebc56b6367"
+dependencies = [
+ "anchor-lang",
+ "session-keys-macros",
+ "solana-security-txt",
+]
+
+[[package]]
+name = "session-keys-macros"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4fb1ba67eabc3cb947145af610d0b3599124333540f6e494812f28db2f3eefe"
+dependencies = [
+ "session-keys-macros-attribute",
+]
+
+[[package]]
+name = "session-keys-macros-attribute"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7962ee082ac6ed55be82e97542b2811f26b48b8973aa4a4fc4474b66d3e194a"
+dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -5668,6 +5700,12 @@ dependencies = [
  "solana-define-syscall 5.2.0",
  "thiserror 2.0.19",
 ]
+
+[[package]]
+name = "solana-security-txt"
+version = "1.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c94a02d486b28f219a4f8f5d7dd93cbfbb93c9f466cb7871c22e50cd5ae9a7a2"
 
 [[package]]
 name = "solana-seed-derivable"

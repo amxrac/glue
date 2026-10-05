@@ -8,6 +8,7 @@ import {
 } from "../lib/anchor";
 import { waitFor } from "../lib/waitFor";
 import { displayName, nameByteLength, MAX_NAME_LEN } from "../lib/names";
+import { prepareSession, removeSession } from "../lib/session";
 
 const MAGIC_PROGRAM = new PublicKey("Magic11111111111111111111111111111111111111");
 
@@ -56,21 +57,37 @@ export function Lobby({
     if (!fee) throw new Error("invalid entry fee");
     const { programBase } = getPrograms(wallet);
     const id = new anchor.BN(Date.now() % 1_000_000);
-    await programBase.methods
-      .initArena(id, fee, trimmedName)
-      .accounts({ host: wallet.publicKey })
-      .rpc();
     const p = arenaPda(wallet.publicKey, id, PROGRAM_ID);
+    const session = await prepareSession(wallet, p);
+    try {
+      await programBase.methods
+        .initArena(id, fee, trimmedName)
+        .accounts({ host: wallet.publicKey })
+        .postInstructions([session.ix])
+        .signers([session.kp])
+        .rpc();
+    } catch (e) {
+      removeSession(session.key);
+      throw e;
+    }
     history.replaceState(null, "", `?arena=${p.toBase58()}`);
     onCreated(p);
   }
 
   async function join() {
     const { programBase } = getPrograms(wallet);
-    await programBase.methods
-      .joinArena(arena.id, trimmedName)
-      .accountsPartial({ player: wallet.publicKey, arenaAccount: pda! })
-      .rpc();
+    const session = await prepareSession(wallet, pda!);
+    try {
+      await programBase.methods
+        .joinArena(arena.id, trimmedName)
+        .accountsPartial({ player: wallet.publicKey, arenaAccount: pda! })
+        .postInstructions([session.ix])
+        .signers([session.kp])
+        .rpc();
+    } catch (e) {
+      removeSession(session.key);
+      throw e;
+    }
   }
 
   async function leave() {

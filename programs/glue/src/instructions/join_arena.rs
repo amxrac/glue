@@ -15,6 +15,12 @@ pub struct JoinArena<'info> {
         bump = arena_account.bump
     )]
     pub arena_account: Account<'info, ArenaAccount>,
+    #[account(
+        mut,
+        seeds = [b"vault", arena_account.key().as_ref()],
+        bump = vault_account.bump
+    )]
+    pub vault_account: Account<'info, VaultAccount>,
     pub system_program: Program<'info, System>,
 }
 
@@ -34,15 +40,16 @@ impl<'info> JoinArena<'info> {
 
         let cpi_accounts = Transfer {
             from: self.player.to_account_info(),
-            to: self.arena_account.to_account_info(),
+            to: self.vault_account.to_account_info(),
         };
 
         let cpi_ctx = CpiContext::new(self.system_program.key(), cpi_accounts);
 
-        transfer(cpi_ctx, self.arena_account.entry_fee)?;
+        transfer(cpi_ctx, self.vault_account.entry_fee)?;
 
         let slot = self.arena_account.players.len();
         self.arena_account.players.push(self.player.key());
+        self.vault_account.players.push(self.player.key());
         self.arena_account.names[slot] = player_name;
         self.arena_account.bots[slot].active = true;
 

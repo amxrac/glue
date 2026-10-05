@@ -4,6 +4,18 @@ use magicblock_magic_program_api::{pda::CRANK_SEED, CRANK_PROGRAM_ID};
 
 #[account]
 #[derive(InitSpace)]
+pub struct VaultAccount {
+    pub arena: Pubkey,
+    #[max_len(6)]
+    pub players: Vec<Pubkey>,
+    pub started_at: i64,
+    pub entry_fee: u64,
+    pub refunded: bool,
+    pub bump: u8,
+}
+
+#[account]
+#[derive(InitSpace)]
 pub struct ArenaAccount {
     pub id: u64,
     pub host: Pubkey,

@@ -122,16 +122,20 @@ export function Lobby({
         }
 
         if ("waiting" in a.status) {
-          setStepBoth("placing bots");
+          setStepBoth("starting match");
+          const delegateIx = await programBase.methods.delegate(id)
+            .accounts({ host: wallet.publicKey, validator: VALIDATOR })
+            .instruction();
           await programBase.methods.startArena(id)
             .accountsPartial({ host: wallet.publicKey, arenaAccount: pda! })
+            .postInstructions([delegateIx])
+            .rpc();
+        } else {
+          setStepBoth("delegating to rollup");
+          await programBase.methods.delegate(id)
+            .accounts({ host: wallet.publicKey, validator: VALIDATOR })
             .rpc();
         }
-
-        setStepBoth("delegating to rollup");
-        await programBase.methods.delegate(id)
-          .accounts({ host: wallet.publicKey, validator: VALIDATOR })
-          .rpc();
         await waitFor("delegation", isDelegated);
       }
 

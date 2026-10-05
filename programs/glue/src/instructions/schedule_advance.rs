@@ -1,4 +1,4 @@
-use crate::{constants::*, state::*};
+use crate::{constants::*, error::*, state::*};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{
     instruction::{AccountMeta, Instruction},
@@ -8,7 +8,6 @@ use bincode;
 use ephemeral_rollups_sdk::consts::MAGIC_PROGRAM_ID;
 use magicblock_magic_program_api::args::ScheduleTaskArgs;
 use magicblock_magic_program_api::instruction::MagicBlockInstruction;
-use magicblock_magic_program_api::pda::CRANK_SIGNER;
 
 #[derive(Accounts)]
 #[instruction(id: u64)]
@@ -38,6 +37,20 @@ pub struct ScheduleAdvance<'info> {
 
 impl<'info> ScheduleAdvance<'info> {
     pub fn schedule_advance(&self, id: u64, args: ScheduleAdvanceArgs) -> Result<()> {
+        let max_ticks = {
+            let data = self.arena_account.try_borrow_data()?;
+            ArenaAccount::try_deserialize(&mut &data[..])?.max_ticks
+        };
+
+        require!(
+            args.execution_interval_millis == TICK_INTERVAL_MS,
+            ArenaError::InvalidTickInterval
+        );
+        require!(
+            args.iterations >= max_ticks as i64,
+            ArenaError::InsufficientIterations
+        );
+
         let advance_ix = Instruction {
             program_id: crate::ID,
             accounts: vec![

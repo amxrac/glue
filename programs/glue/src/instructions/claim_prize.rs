@@ -1,4 +1,4 @@
-use crate::{error::ArenaError, state::ArenaAccount, ArenaStatus};
+use crate::{error::ArenaError, state::*};
 use anchor_lang::prelude::*;
 
 #[event]
@@ -29,11 +29,20 @@ pub struct ClaimPrize<'info> {
         address = arena_account.host @ ArenaError::UnauthorizedSigner
     )]
     pub host: UncheckedAccount<'info>,
+    #[account(
+        mut,
+        close = host,
+        seeds = [b"vault", arena_account.key().as_ref()],
+        bump = vault_account.bump
+    )]
+    pub vault_account: Account<'info, VaultAccount>,
 }
 
 impl<'info> ClaimPrize<'info> {
     pub fn claim_prize(&self, id: u64, leader_accounts: &[AccountInfo<'info>]) -> Result<()> {
+        require!(!self.vault_account.refunded, ArenaError::AlreadyRefunded);
         let arena = &self.arena_account;
+        let vault = &self.vault_account;
         let n = self.arena_account.players.len();
 
         let leaders: Vec<(usize, Pubkey)> = (0..n)
@@ -58,7 +67,7 @@ impl<'info> ClaimPrize<'info> {
         for (i, (acc, (bot_idx, key))) in leader_accounts.iter().zip(&leaders).enumerate() {
             require_keys_eq!(acc.key(), *key, ArenaError::InvalidWinnerAccounts);
             let amount = if i == 0 { share + dust } else { share };
-            arena.sub_lamports(amount)?;
+            vault.sub_lamports(amount)?;
             acc.add_lamports(amount)?;
         }
 

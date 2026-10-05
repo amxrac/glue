@@ -27,3 +27,7 @@ pub const DIRECTIONS: [(i16, i16); 8] = [
 pub const ER_VALIDATOR: Pubkey = pubkey!("MEUGGrYPxKk17hCr7wpT6s8dtNokZj5U2L57vjYMS8e");
 pub const MATCH_TIMEOUT_SECS: i64 = 200;
 pub const MAX_NAME_LEN: usize = 32;
+pub const TICK_INTERVAL_MS: i64 = 100;
+pub const MAX_TICKS: u64 = 900;
+pub const EMERGENCY_REFUND_SECS: i64 = 5 * 60 * 60;
+pub const DELEGATION_PROGRAM_ID: Pubkey = pubkey!("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");

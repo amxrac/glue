@@ -54,7 +54,7 @@ export function Result({ arena, pda, wallet, onDone }: {
       return i !== null && i.owner.equals(PROGRAM_ID);
     };
 
-    setStepBoth("Settling on rollup");
+    setStepBoth("Saving results");
     try {
       await programEr.methods.settleArena(arena.id)
         .accountsPartial({ payer: wallet.publicKey, arenaAccount: pda })
@@ -62,18 +62,18 @@ export function Result({ arena, pda, wallet, onDone }: {
     } catch (e: any) {
       const msg = String(e?.message ?? e);
       if (/reject|ArenaNotFinished/i.test(msg)) throw e;
-      setStepBoth("Returning to Solana");
+      setStepBoth("Confirming results");
       try { await waitFor("undelegation", backOnBase, 10_000); return; }
       catch { throw e; }
     }
 
-    setStepBoth("Returning to Solana");
+    setStepBoth("Confirming results");
     await waitFor("undelegation", backOnBase);
   }
 
   async function claim() {
     const { programBase } = getPrograms(wallet);
-    setStepBoth(forced ? "Refunding" : "Claiming prize");
+    setStepBoth(forced ? "Sending refunds" : "Sending prize");
     const settled = await readBase.account.arenaAccount.fetch(pda);
     const winners = leadersOf(settled);
     if (winners.length === 0) throw new Error("no winners recorded on the settled arena");
@@ -97,16 +97,15 @@ export function Result({ arena, pda, wallet, onDone }: {
     finally { setStepBoth(null); }
   }
 
-  const claimLabel = forced ? "Claim refund" : "Claim prize";
-  const settleClaimLabel = forced ? "Settle and refund" : "Settle and claim";
+  const primaryLabel = forced ? "Refund all players" : "Claim prize";
 
   const action: Action =
     delegated === null ? null
     : delegated
-      ? isWinner ? { kind: "button", label: settleClaimLabel, fn: settleAndClaim }
-      : { kind: "button", label: "Settle", fn: settle }
-    : isWinner ? { kind: "button", label: claimLabel, fn: claim }
-    : { kind: "note", text: "Settled. Waiting for a winner to claim…" };
+      ? isWinner ? { kind: "button", label: primaryLabel, fn: settleAndClaim }
+      : { kind: "button", label: "Finalize results", fn: settle }
+    : isWinner ? { kind: "button", label: primaryLabel, fn: claim }
+    : { kind: "note", text: "Results saved. Waiting for the winner to claim." };
 
   const potSol = (arena.entryFee.toNumber() * players.length) / 1e9;
 
@@ -114,9 +113,9 @@ export function Result({ arena, pda, wallet, onDone }: {
     ? "Match ended early"
     : isWinner ? (tie ? "You tied" : "You won") : "Match over";
   const subtitle = forced
-    ? "Match stalled, so every entry fee is refunded"
+    ? "The match stalled, so every entry fee is refunded"
     : tie
-      ? `Tie. Pot split ${leaders.length} ways`
+      ? `Tie — pot split ${leaders.length} ways`
       : !isWinner && leaderIdx.length > 0 ? `${displayName(arena, leaderIdx[0])} won` : null;
 
   return (

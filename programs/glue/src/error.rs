@@ -40,8 +40,6 @@ pub enum ArenaError {
     NoActiveBots,
     #[msg("Arena Not Finished")]
     ArenaNotFinished,
-    #[msg("Prize Already Claimed")]
-    PrizeAlreadyClaimed,
     #[msg("Arena Not Cancellable")]
     ArenaNotCancellable,
     #[msg("Arena Not Cancellable")]
@@ -66,4 +64,14 @@ pub enum ArenaError {
     RandomnessAlreadySet,
     #[msg("Invalid Session Token")]
     InvalidSessionToken,
+    #[msg("Crank interval must equal TICK_INTERVAL_MS")]
+    InvalidTickInterval,
+    #[msg("Crank iterations must cover max_ticks")]
+    InsufficientIterations,
+    #[msg("Arena Not Delegated")]
+    ArenaNotDelegated,
+    #[msg("Emergency Refund Not Ready")]
+    EmergencyRefundNotReady,
+    #[msg("Entry Fees Already Refunded")]
+    AlreadyRefunded,
 }

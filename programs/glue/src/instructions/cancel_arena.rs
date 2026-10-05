@@ -14,6 +14,13 @@ pub struct CancelArena<'info> {
         has_one = host
     )]
     pub arena_account: Account<'info, ArenaAccount>,
+    #[account(
+        mut,
+        close = host,
+        seeds = [b"vault", arena_account.key().as_ref()],
+        bump = vault_account.bump
+    )]
+    pub vault_account: Account<'info, VaultAccount>,
 }
 
 impl<'info> CancelArena<'info> {
@@ -23,29 +30,22 @@ impl<'info> CancelArena<'info> {
             ArenaError::ArenaNotCancellable
         );
 
-        let entry_fee = self.arena_account.entry_fee;
+        let entry_fee = self.vault_account.entry_fee;
         let players = self.arena_account.players.clone();
         require!(
             remaining.len() == players.len(),
             ArenaError::MissingRefundAccounts
         );
 
-        let arena_account_info = self.arena_account.to_account_info();
+        let vault_account_info = self.vault_account.to_account_info();
 
         for (i, player_key) in players.iter().enumerate() {
             let dest = &remaining[i];
             require!(dest.key == player_key, ArenaError::InvalidRefundAccount);
             require!(dest.is_writable, ArenaError::InvalidRefundAccount);
 
-            let arena_lamports = arena_account_info.lamports();
-            **arena_account_info.try_borrow_mut_lamports()? = arena_lamports
-                .checked_sub(entry_fee)
-                .ok_or(ArenaError::CounterOverflow)?;
-
-            let dest_lamports = dest.lamports();
-            **dest.try_borrow_mut_lamports()? = dest_lamports
-                .checked_add(entry_fee)
-                .ok_or(ArenaError::CounterOverflow)?;
+            self.vault_account.sub_lamports(entry_fee)?;
+            dest.add_lamports(entry_fee)?;
         }
         Ok(())
     }

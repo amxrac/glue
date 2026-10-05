@@ -17,6 +17,12 @@ pub struct StartArena<'info> {
         has_one = host
     )]
     pub arena_account: Account<'info, ArenaAccount>,
+    #[account(
+        mut,
+        seeds = [b"vault", arena_account.key().as_ref()],
+        bump = vault_account.bump
+    )]
+    pub vault_account: Account<'info, VaultAccount>,
 }
 
 impl<'info> StartArena<'info> {
@@ -110,7 +116,10 @@ impl<'info> StartArena<'info> {
                 }
             }
         }
-        self.arena_account.started_at = Clock::get()?.unix_timestamp;
+
+        let now = Clock::get()?.unix_timestamp;
+        self.vault_account.started_at = now;
+        self.arena_account.started_at = now;
         self.arena_account.status = ArenaStatus::Running;
         Ok(())
     }

@@ -1,6 +1,6 @@
 use std::vec;
 
-use crate::{error::*, state::*, Resource};
+use crate::{constants::*, error::*, state::*};
 use anchor_lang::context::CpiContext;
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
@@ -18,6 +18,14 @@ pub struct InitArena<'info> {
         bump
     )]
     pub arena_account: Account<'info, ArenaAccount>,
+    #[account(
+        init,
+        payer = host,
+        space = 8 + VaultAccount::INIT_SPACE,
+        seeds = [b"vault", arena_account.key().as_ref()],
+        bump
+    )]
+    pub vault_account: Account<'info, VaultAccount>,
     pub system_program: Program<'info, System>,
 }
 
@@ -31,10 +39,11 @@ impl<'info> InitArena<'info> {
     ) -> Result<()> {
         require!(entry_fee > 0, ArenaError::EntryFeeError);
         let host_name = encode_name(&name)?;
+        let host = self.host.key();
 
         let cpi_accounts = Transfer {
             from: self.host.to_account_info(),
-            to: self.arena_account.to_account_info(),
+            to: self.vault_account.to_account_info(),
         };
 
         let cpi_ctx = CpiContext::new(self.system_program.key(), cpi_accounts);
@@ -43,8 +52,8 @@ impl<'info> InitArena<'info> {
 
         self.arena_account.set_inner(ArenaAccount {
             id,
-            host: self.host.key(),
-            players: vec![self.host.key()],
+            host: host,
+            players: vec![host],
             names: {
                 let mut names = [[0u8; 32]; 6];
                 names[0] = host_name;
@@ -60,11 +69,20 @@ impl<'info> InitArena<'info> {
             spawn_counter: 0,
             resources: [Resource::default(); 20],
             tick: 0,
-            max_ticks: 550,
+            max_ticks: MAX_TICKS,
             entry_fee,
             winners: 0,
             started_at: 0,
             bump: bumps.arena_account,
+        });
+
+        self.vault_account.set_inner(VaultAccount {
+            arena: self.arena_account.key(),
+            players: vec![host],
+            started_at: 0,
+            entry_fee,
+            refunded: false,
+            bump: bumps.vault_account,
         });
 
         Ok(())

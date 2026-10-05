@@ -1,4 +1,4 @@
-use crate::{error::ArenaError, state::ArenaAccount, ArenaStatus};
+use crate::{error::ArenaError, state::*, ArenaStatus};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -12,11 +12,19 @@ pub struct LeaveArena<'info> {
             bump = arena_account.bump,
         )]
     pub arena_account: Account<'info, ArenaAccount>,
+    #[account(
+        mut,
+        seeds = [b"vault", arena_account.key().as_ref()],
+        bump = vault_account.bump
+    )]
+    pub vault_account: Account<'info, VaultAccount>,
 }
 
 impl<'info> LeaveArena<'info> {
     pub fn leave_arena(&mut self) -> Result<()> {
         let arena = &mut self.arena_account;
+        let vault = &mut self.vault_account;
+
         require!(
             arena.status == ArenaStatus::Waiting,
             ArenaError::ArenaAlreadyStarted
@@ -29,6 +37,7 @@ impl<'info> LeaveArena<'info> {
             .position(|p| *p == self.player.key())
             .ok_or(ArenaError::NotAPlayer)?;
         arena.players.remove(idx);
+        vault.players.remove(idx);
 
         arena.names.copy_within(idx + 1.., idx);
         let last = arena.names.len() - 1;
@@ -39,8 +48,8 @@ impl<'info> LeaveArena<'info> {
             bot.active = i < n;
         }
 
-        let entry_fee = arena.entry_fee;
-        arena.sub_lamports(entry_fee)?;
+        let entry_fee = vault.entry_fee;
+        vault.sub_lamports(entry_fee)?;
         self.player.add_lamports(entry_fee)?;
 
         Ok(())

@@ -91,4 +91,8 @@ pub mod glue {
     pub fn force_finish(ctx: Context<ForceFinish>, id: u64) -> Result<()> {
         instructions::force_finish::handler(ctx, id)
     }
+
+    pub fn emergency_refund<'info>(ctx: Context<'info, EmergencyRefund<'info>>) -> Result<()> {
+        instructions::emergency_refund::handler(ctx)
+    }
 }

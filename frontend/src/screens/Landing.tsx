@@ -92,8 +92,8 @@ export function Landing({ onCreate, onJoin }: {
     <div>
       <div className="landing">
         <div>
-          <span className="pill">About 1 minute per match</span>
-          <h1>Back a bot, not a joystick</h1>
+          <span className="pill">About 90 seconds per match</span>
+          <h1>Up to six bots, One pot</h1>
           <p className="muted" style={{ margin: 0 }}>
             Bots move by themselves. Your only move is when to spend: more speed, or a wider
             field of vision.

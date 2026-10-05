@@ -112,6 +112,28 @@ export type Glue = {
               }
             ]
           }
+        },
+        {
+          "name": "vaultAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arenaAccount"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -169,6 +191,28 @@ export type Glue = {
         {
           "name": "host",
           "writable": true
+        },
+        {
+          "name": "vaultAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arenaAccount"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -416,6 +460,47 @@ export type Glue = {
       ]
     },
     {
+      "name": "emergencyRefund",
+      "discriminator": [
+        188,
+        73,
+        52,
+        195,
+        137,
+        70,
+        180,
+        147
+      ],
+      "accounts": [
+        {
+          "name": "arenaAccount"
+        },
+        {
+          "name": "vaultAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arenaAccount"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "forceFinish",
       "discriminator": [
         158,
@@ -508,6 +593,28 @@ export type Glue = {
           }
         },
         {
+          "name": "vaultAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arenaAccount"
+              }
+            ]
+          }
+        },
+        {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
@@ -573,6 +680,28 @@ export type Glue = {
           }
         },
         {
+          "name": "vaultAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arenaAccount"
+              }
+            ]
+          }
+        },
+        {
           "name": "systemProgram",
           "address": "11111111111111111111111111111111"
         }
@@ -629,6 +758,28 @@ export type Glue = {
               {
                 "kind": "arg",
                 "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vaultAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arenaAccount"
               }
             ]
           }
@@ -1013,6 +1164,28 @@ export type Glue = {
               }
             ]
           }
+        },
+        {
+          "name": "vaultAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arenaAccount"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -1102,6 +1275,19 @@ export type Glue = {
         196,
         10,
         188
+      ]
+    },
+    {
+      "name": "vaultAccount",
+      "discriminator": [
+        230,
+        251,
+        241,
+        83,
+        139,
+        202,
+        93,
+        28
       ]
     }
   ],
@@ -1218,68 +1404,88 @@ export type Glue = {
     },
     {
       "code": 6019,
-      "name": "prizeAlreadyClaimed",
-      "msg": "Prize Already Claimed"
-    },
-    {
-      "code": 6020,
       "name": "arenaNotCancellable",
       "msg": "Arena Not Cancellable"
     },
     {
-      "code": 6021,
+      "code": 6020,
       "name": "notWinner",
       "msg": "Arena Not Cancellable"
     },
     {
-      "code": 6022,
+      "code": 6021,
       "name": "invalidRefundAccount",
       "msg": "Invalid Refund Account"
     },
     {
-      "code": 6023,
+      "code": 6022,
       "name": "missingRefundAccounts",
       "msg": "Missing Refund Account"
     },
     {
-      "code": 6024,
+      "code": 6023,
       "name": "arenaAlreadyStarted",
       "msg": "Arena already started"
     },
     {
-      "code": 6025,
+      "code": 6024,
       "name": "hostCannotLeave",
       "msg": "Host Cannot Leave"
     },
     {
-      "code": 6026,
+      "code": 6025,
       "name": "notAPlayer",
       "msg": "Not A Player"
     },
     {
-      "code": 6027,
+      "code": 6026,
       "name": "invalidWinnerAccounts",
       "msg": "Invalid Winner Accounts"
     },
     {
-      "code": 6028,
+      "code": 6027,
       "name": "matchNotTimedOut",
       "msg": "Match Not Timed Out"
     },
     {
-      "code": 6029,
+      "code": 6028,
       "name": "nameTooLong",
       "msg": "Name Too Long"
     },
     {
-      "code": 6030,
+      "code": 6029,
       "name": "randomnessAlreadySet",
       "msg": "Randomness Already Set"
     },
     {
-      "code": 6031,
+      "code": 6030,
       "name": "invalidSessionToken",
       "msg": "Invalid Session Token"
+    },
+    {
+      "code": 6031,
+      "name": "invalidTickInterval",
+      "msg": "Crank interval must equal TICK_INTERVAL_MS"
+    },
+    {
+      "code": 6032,
+      "name": "insufficientIterations",
+      "msg": "Crank iterations must cover max_ticks"
+    },
+    {
+      "code": 6033,
+      "name": "arenaNotDelegated",
+      "msg": "Arena Not Delegated"
+    },
+    {
+      "code": 6034,
+      "name": "emergencyRefundNotReady",
+      "msg": "Emergency Refund Not Ready"
+    },
+    {
+      "code": 6035,
+      "name": "alreadyRefunded",
+      "msg": "Entry Fees Already Refunded"
     }
   ],
   "types": [
@@ -1561,6 +1767,40 @@ export type Glue = {
           },
           {
             "name": "vision"
+          }
+        ]
+      }
+    },
+    {
+      "name": "vaultAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "players",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "startedAt",
+            "type": "i64"
+          },
+          {
+            "name": "entryFee",
+            "type": "u64"
+          },
+          {
+            "name": "refunded",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }

@@ -106,6 +106,28 @@
               }
             ]
           }
+        },
+        {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -163,6 +185,28 @@
         {
           "name": "host",
           "writable": true
+        },
+        {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -410,6 +454,47 @@
       ]
     },
     {
+      "name": "emergency_refund",
+      "discriminator": [
+        188,
+        73,
+        52,
+        195,
+        137,
+        70,
+        180,
+        147
+      ],
+      "accounts": [
+        {
+          "name": "arena_account"
+        },
+        {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "force_finish",
       "discriminator": [
         158,
@@ -502,6 +587,28 @@
           }
         },
         {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -567,6 +674,28 @@
           }
         },
         {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -623,6 +752,28 @@
               {
                 "kind": "arg",
                 "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
               }
             ]
           }
@@ -1007,6 +1158,28 @@
               }
             ]
           }
+        },
+        {
+          "name": "vault_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account"
+              }
+            ]
+          }
         }
       ],
       "args": [
@@ -1096,6 +1269,19 @@
         196,
         10,
         188
+      ]
+    },
+    {
+      "name": "VaultAccount",
+      "discriminator": [
+        230,
+        251,
+        241,
+        83,
+        139,
+        202,
+        93,
+        28
       ]
     }
   ],
@@ -1212,68 +1398,88 @@
     },
     {
       "code": 6019,
-      "name": "PrizeAlreadyClaimed",
-      "msg": "Prize Already Claimed"
-    },
-    {
-      "code": 6020,
       "name": "ArenaNotCancellable",
       "msg": "Arena Not Cancellable"
     },
     {
-      "code": 6021,
+      "code": 6020,
       "name": "NotWinner",
       "msg": "Arena Not Cancellable"
     },
     {
-      "code": 6022,
+      "code": 6021,
       "name": "InvalidRefundAccount",
       "msg": "Invalid Refund Account"
     },
     {
-      "code": 6023,
+      "code": 6022,
       "name": "MissingRefundAccounts",
       "msg": "Missing Refund Account"
     },
     {
-      "code": 6024,
+      "code": 6023,
       "name": "ArenaAlreadyStarted",
       "msg": "Arena already started"
     },
     {
-      "code": 6025,
+      "code": 6024,
       "name": "HostCannotLeave",
       "msg": "Host Cannot Leave"
     },
     {
-      "code": 6026,
+      "code": 6025,
       "name": "NotAPlayer",
       "msg": "Not A Player"
     },
     {
-      "code": 6027,
+      "code": 6026,
       "name": "InvalidWinnerAccounts",
       "msg": "Invalid Winner Accounts"
     },
     {
-      "code": 6028,
+      "code": 6027,
       "name": "MatchNotTimedOut",
       "msg": "Match Not Timed Out"
     },
     {
-      "code": 6029,
+      "code": 6028,
       "name": "NameTooLong",
       "msg": "Name Too Long"
     },
     {
-      "code": 6030,
+      "code": 6029,
       "name": "RandomnessAlreadySet",
       "msg": "Randomness Already Set"
     },
     {
-      "code": 6031,
+      "code": 6030,
       "name": "InvalidSessionToken",
       "msg": "Invalid Session Token"
+    },
+    {
+      "code": 6031,
+      "name": "InvalidTickInterval",
+      "msg": "Crank interval must equal TICK_INTERVAL_MS"
+    },
+    {
+      "code": 6032,
+      "name": "InsufficientIterations",
+      "msg": "Crank iterations must cover max_ticks"
+    },
+    {
+      "code": 6033,
+      "name": "ArenaNotDelegated",
+      "msg": "Arena Not Delegated"
+    },
+    {
+      "code": 6034,
+      "name": "EmergencyRefundNotReady",
+      "msg": "Emergency Refund Not Ready"
+    },
+    {
+      "code": 6035,
+      "name": "AlreadyRefunded",
+      "msg": "Entry Fees Already Refunded"
     }
   ],
   "types": [
@@ -1555,6 +1761,40 @@
           },
           {
             "name": "Vision"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "players",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "started_at",
+            "type": "i64"
+          },
+          {
+            "name": "entry_fee",
+            "type": "u64"
+          },
+          {
+            "name": "refunded",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }

@@ -23,6 +23,7 @@ export const INTERVAL_MS = new anchor.BN(100);
 export const PROGRAM_ID = new PublicKey((idl as Glue).address);
 export const MAP_WIDTH = 100;
 export const MAP_HEIGHT = 100;
+export const EMERGENCY_REFUND_SECS = 5 * 60 * 60;
 
 export const connBase = new Connection(RPC_BASE, {
   wsEndpoint: "wss://api.devnet.solana.com/",
@@ -38,6 +39,10 @@ export function arenaPda(host: PublicKey, id: anchor.BN, programId: PublicKey) {
     [Buffer.from("arena"), host.toBuffer(), id.toArrayLike(Buffer, "le", 8)],
     programId
   )[0];
+}
+
+export function vaultPda(arena: PublicKey) {
+  return PublicKey.findProgramAddressSync([Buffer.from("vault"), arena.toBuffer()], PROGRAM_ID)[0];
 }
 
 export function getPrograms(wallet: AnchorWallet) {

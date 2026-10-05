@@ -57,13 +57,12 @@ export function Grid({ arena, myIndex }: { arena: any; myIndex?: number }) {
       arena.bots.forEach((b: any, i: number) => {
         const g = glidesRef.current[i];
         if (!b.active || !g) {
-          // first appearance or inactive: snap (no slide in from 0,0)
           glidesRef.current[i] = b.active
             ? { x0: b.x, y0: b.y, x1: b.x, y1: b.y, start: now, dur }
             : null;
           return;
         }
-        const from = positionAt(g, now); // current drawn position, so mid-glide updates don't snap
+        const from = positionAt(g, now);
         glidesRef.current[i] = { x0: from.x, y0: from.y, x1: b.x, y1: b.y, start: now, dur };
       });
     }

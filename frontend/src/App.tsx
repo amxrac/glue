@@ -18,6 +18,7 @@ import { Lobby } from "./screens/Lobby";
 import { Result } from "./screens/Result";
 import { Landing, parseArenaInput } from "./screens/Landing";
 import { sweepExpiredSessions } from "./lib/session";
+import { EmergencyRefund } from "./components/EmergencyRefund";
 
 function useSessionSweep() {
   useEffect(() => {
@@ -35,14 +36,16 @@ function readArenaParam(): { pda: PublicKey | null; invalid: boolean } {
   return { pda, invalid: pda === null };
 }
 
-function Notice({ children, onBack, action }: {
+function Notice({ children, onBack, action, footer }: {
   children: ReactNode;
   onBack: () => void;
   action?: ReactNode;
+  footer?: ReactNode;
 }) {
   return (
     <div className="card" style={{ maxWidth: 480, margin: "0 auto" }}>
       <p style={{ marginTop: 0 }}>{children}</p>
+      {footer}
       <div className="actions">
         {action}
         <button onClick={onBack}>Back to home</button>
@@ -102,7 +105,10 @@ function Home() {
 
   if (pda && !arena && error) {
     return (
-      <Notice onBack={goHome}>
+      <Notice
+        onBack={goHome}
+        footer={<EmergencyRefund pda={pda} wallet={wallet ?? undefined} />}
+      >
         Can't reach the network. Retrying…
         <br />
         <span className="muted small">{error}</span>

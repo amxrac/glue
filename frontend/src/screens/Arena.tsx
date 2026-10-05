@@ -13,6 +13,7 @@ import {
   sessionTokenPda,
   type ActiveSession,
 } from "../lib/session";
+import { EmergencyRefund } from "../components/EmergencyRefund";
 
 const SPEED_COST = 10;
 const VISION_COST = 10;
@@ -264,6 +265,7 @@ export function Arena({ arena, pda, wallet, delegated }: {
           </button>
         </div>
       )}
+      {canForce && stalled && <EmergencyRefund pda={pda} wallet={wallet} />}
 
       {err && <p className="error">{err}</p>}
     </div>

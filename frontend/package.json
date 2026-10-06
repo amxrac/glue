@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "idl": "cp ../target/idl/glue.json ../target/types/glue.ts src/idl/",
-    "dev": "npm run idl && vite",
+    "dev": "vite",
+    "dev:sync": "npm run idl && vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

@@ -10,6 +10,13 @@ pub struct ArenaSettled {
     pub share: u64,
 }
 
+#[event]
+pub struct ArenaClosed {
+    pub arena_id: u64,
+    pub closed_by: Pubkey,
+    pub rent_returned: u64,
+}
+
 #[derive(Accounts)]
 #[instruction(id: u64)]
 pub struct ClaimPrize<'info> {
@@ -40,7 +47,20 @@ pub struct ClaimPrize<'info> {
 
 impl<'info> ClaimPrize<'info> {
     pub fn claim_prize(&self, id: u64, leader_accounts: &[AccountInfo<'info>]) -> Result<()> {
-        require!(!self.vault_account.refunded, ArenaError::AlreadyRefunded);
+        if self.vault_account.refunded {
+            let rent_returned = self
+                .arena_account
+                .get_lamports()
+                .checked_add(self.vault_account.get_lamports())
+                .ok_or(ArenaError::CounterOverflow)?;
+
+            emit!(ArenaClosed {
+                arena_id: id,
+                closed_by: self.caller.key(),
+                rent_returned,
+            });
+            return Ok(());
+        }
         let arena = &self.arena_account;
         let vault = &self.vault_account;
         let n = self.arena_account.players.len();

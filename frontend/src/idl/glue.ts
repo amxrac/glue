@@ -1293,6 +1293,19 @@ export type Glue = {
   ],
   "events": [
     {
+      "name": "arenaClosed",
+      "discriminator": [
+        216,
+        179,
+        101,
+        227,
+        196,
+        151,
+        245,
+        212
+      ]
+    },
+    {
       "name": "arenaSettled",
       "discriminator": [
         54,
@@ -1594,6 +1607,26 @@ export type Glue = {
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "arenaClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arenaId",
+            "type": "u64"
+          },
+          {
+            "name": "closedBy",
+            "type": "pubkey"
+          },
+          {
+            "name": "rentReturned",
+            "type": "u64"
           }
         ]
       }

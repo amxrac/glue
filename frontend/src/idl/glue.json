@@ -1287,6 +1287,19 @@
   ],
   "events": [
     {
+      "name": "ArenaClosed",
+      "discriminator": [
+        216,
+        179,
+        101,
+        227,
+        196,
+        151,
+        245,
+        212
+      ]
+    },
+    {
       "name": "ArenaSettled",
       "discriminator": [
         54,
@@ -1588,6 +1601,26 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArenaClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena_id",
+            "type": "u64"
+          },
+          {
+            "name": "closed_by",
+            "type": "pubkey"
+          },
+          {
+            "name": "rent_returned",
+            "type": "u64"
           }
         ]
       }

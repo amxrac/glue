@@ -199,7 +199,7 @@ export function Arena({ arena, pda, wallet, delegated }: {
 
       <Grid arena={arena} myIndex={myIndex} />
       <p className="muted small" style={{ margin: "6px 0 0" }}>
-        Circles show each bot's field of vision.
+        Your bot has a white ring. Circles show each bot's field of vision.
       </p>
 
       <div className="list-head">
@@ -261,7 +261,7 @@ export function Arena({ arena, pda, wallet, delegated }: {
             Match stalled. Anyone can end it, and every entry fee is refunded.
           </p>
           <button className="btn-primary" style={{ width: "100%" }} disabled={pending !== null} onClick={forceFinish}>
-            {pending === "force" ? "Ending match…" : "Force finish"}
+            {pending === "force" ? "Ending match…" : "End match and refund"}
           </button>
         </div>
       )}

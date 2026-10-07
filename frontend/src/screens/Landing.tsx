@@ -114,6 +114,9 @@ export function Landing({ onCreate, onJoin }: {
               {showHow ? "Hide how it works" : "How it works"}
             </button>
           </div>
+          <p className="muted small" style={{ margin: "10px 0 0" }}>
+            glue needs a Solana wallet (e.g. Phantom or Solflare) set to devnet, with some devnet SOL (free from a <a href="https://faucet.solana.com/" target="_blank" rel="noopener noreferrer">faucet</a>). On a phone, open this site in your wallet's built-in browser.
+          </p>
         </div>
         <BoardPreview />
       </div>

@@ -56,8 +56,8 @@ function HowItWorks() {
       <h2>How a match works</h2>
       <ol>
         <li>The host sets an entry fee and shares the invite link.</li>
-        <li>Up to 6 players join. Each entry fee goes into the pot.</li>
-        <li>Bots spawn and hunt resources on their own. You never steer.</li>
+        <li>Up to 6 players can join. Each entry fee goes into the pot.</li>
+        <li>Bots spawn and hunt resources on their own; you never steer.</li>
         <li>After about {MATCH_SECS} seconds, the highest score takes the pot.</li>
       </ol>
       <p className="muted" style={{ fontSize: 14, margin: 0 }}>
@@ -99,9 +99,9 @@ export function Landing({ onCreate, onJoin }: {
             field of vision.
           </p>
           <ul className="facts">
-            <li><strong>Speed</strong> moves more cells each step</li>
             <li><strong>Score</strong> never drops</li>
             <li><strong>Credits</strong> drop when you spend</li>
+            <li><strong>Speed</strong> makes the bot move faster</li>
             <li><strong>Vision</strong> is the circle around your bot. It goes after the nearest resource inside it</li>
           </ul>
           <div className="actions">

@@ -1056,6 +1056,73 @@ export type Glue = {
       ]
     },
     {
+      "name": "setMode",
+      "discriminator": [
+        159,
+        47,
+        147,
+        247,
+        85,
+        53,
+        84,
+        230
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "signer": true
+        },
+        {
+          "name": "arenaAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "arenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "playerWallet"
+        },
+        {
+          "name": "sessionToken",
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        },
+        {
+          "name": "mode",
+          "type": {
+            "defined": {
+              "name": "botMode"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "settleArena",
       "discriminator": [
         222,
@@ -1718,6 +1785,35 @@ export type Glue = {
           {
             "name": "flipY",
             "type": "bool"
+          },
+          {
+            "name": "mode",
+            "type": {
+              "defined": {
+                "name": "botMode"
+              }
+            }
+          },
+          {
+            "name": "robbedCooldownUntil",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "botMode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "hunt"
+          },
+          {
+            "name": "gather"
+          },
+          {
+            "name": "defend"
           }
         ]
       }

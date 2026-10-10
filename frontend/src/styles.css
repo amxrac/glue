@@ -128,3 +128,31 @@
   font-size: 12px; padding: 2px 8px; border-radius: var(--radius);
   background: var(--accent-bg); color: var(--accent);
 }
+.modes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 8px 0;
+}
+.glue button.mode-btn:not(.wallet-adapter-button) {
+  min-height: 44px;
+  padding: 6px 8px;
+}
+.glue button.mode-btn.active:not(.wallet-adapter-button),
+.glue button.mode-btn.active:not(.wallet-adapter-button):disabled {
+  background: var(--text);
+  color: var(--on-text);
+  border-color: transparent;
+  opacity: 1;
+}
+
+.glue button.upgrade.compact:not(.wallet-adapter-button) {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+}
+.upgrade.compact .upgrade-effect {
+  margin-left: auto;
+}

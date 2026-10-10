@@ -1050,6 +1050,73 @@
       ]
     },
     {
+      "name": "set_mode",
+      "discriminator": [
+        159,
+        47,
+        147,
+        247,
+        85,
+        53,
+        84,
+        230
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "signer": true
+        },
+        {
+          "name": "arena_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena_account.host",
+                "account": "ArenaAccount"
+              },
+              {
+                "kind": "arg",
+                "path": "id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "player_wallet"
+        },
+        {
+          "name": "session_token",
+          "optional": true
+        }
+      ],
+      "args": [
+        {
+          "name": "id",
+          "type": "u64"
+        },
+        {
+          "name": "mode",
+          "type": {
+            "defined": {
+              "name": "BotMode"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "settle_arena",
       "discriminator": [
         222,
@@ -1712,6 +1779,35 @@
           {
             "name": "flip_y",
             "type": "bool"
+          },
+          {
+            "name": "mode",
+            "type": {
+              "defined": {
+                "name": "BotMode"
+              }
+            }
+          },
+          {
+            "name": "robbed_cooldown_until",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BotMode",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Hunt"
+          },
+          {
+            "name": "Gather"
+          },
+          {
+            "name": "Defend"
           }
         ]
       }

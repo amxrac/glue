@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { PublicKey } from "@solana/web3.js";
+import type { Program } from "@coral-xyz/anchor";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
+import type { Glue } from "../idl/glue";
 import { getPrograms, INTERVAL_MS, PROGRAM_ID } from "../lib/anchor";
 import { Grid } from "../components/Grid";
 import { BOT_COLOURS } from "../lib/colours";
@@ -24,11 +26,26 @@ const CLOCK_MARGIN_SECS = 10;
 const MS_PER_TICK = INTERVAL_MS.toNumber();
 const STALL_MS = 3000;
 const CLOCK_TICK_MS = 500;
-
 const SESSION_FAILURE =
   /InvalidSessionToken|InvalidToken|NoToken|AccountNotInitialized|AccountDiscriminatorMismatch|prior credit|insufficient (funds|lamports)/i;
 
-type Pending = "speed" | "vision" | "force" | "renew" | null;
+type Pending = "speed" | "vision" | "force" | "renew" | "mode" | null;
+
+type ModeKey = "gather" | "hunt" | "defend";
+const MODES: { key: ModeKey; label: string }[] = [
+  { key: "gather", label: "Gather" },
+  { key: "hunt", label: "Hunt" },
+  { key: "defend", label: "Defend" },
+];
+const modeOf = (bot: any): ModeKey => Object.keys(bot.mode)[0] as ModeKey;
+const modeLabel = (m: ModeKey) => MODES.find((x) => x.key === m)?.label ?? m;
+
+type PlayerAccounts = {
+  signer: PublicKey;
+  playerWallet: PublicKey;
+  sessionToken: PublicKey;
+  arenaAccount: PublicKey;
+};
 
 function statusOf(arena: any): string {
   return Object.keys(arena.status)[0];
@@ -52,14 +69,12 @@ function UpgradeCard({ name, cost, credits, effect, pending, disabled, onClick }
   const short = cost - credits;
   const affordable = short <= 0;
   return (
-    <button className="upgrade" disabled={disabled || !affordable} onClick={onClick}>
-      <span className="upgrade-top">
-        <span className="upgrade-name">{name}</span>
-        <span className="cost">{cost} cr</span>
+    <button className="upgrade compact" disabled={disabled || !affordable} onClick={onClick}>
+      <span className="upgrade-name">{name}</span>
+      <span className="muted small upgrade-effect">
+        {pending ? "Upgrading…" : affordable ? effect : `Need ${short} more`}
       </span>
-      <span className="muted small">
-        {pending ? "Upgrading…" : affordable ? effect : `Need ${short} more credits`}
-      </span>
+      <span className="cost">{cost} cr</span>
     </button>
   );
 }
@@ -108,6 +123,7 @@ export function Arena({ arena, pda, wallet, delegated }: {
   );
   const myBot = myIndex >= 0 ? arena.bots[myIndex] : null;
   const credits = myBot ? myBot.credits.toNumber() : 0;
+  const myMode: ModeKey | null = myBot ? modeOf(myBot) : null;
 
   const maxTicks = arena.maxTicks.toNumber();
   const ticksLeft = Math.max(0, maxTicks - tick);
@@ -137,35 +153,53 @@ export function Arena({ arena, pda, wallet, delegated }: {
     }
   }
 
-  const upgrade = (kind: "speed" | "vision") =>
-    run(kind, async () => {
-      const now = Math.floor(Date.now() / 1000);
-      if (session && programSession && isSessionUsable(session.validUntil, now)) {
-        try {
-          await programSession.methods
-            .upgradeBot(arena.id, kind === "speed" ? { speed: {} } : { vision: {} })
-            .accountsPartial({
-              signer: session.kp.publicKey,
-              playerWallet: wallet.publicKey,
-              sessionToken: sessionTokenPda(session.kp.publicKey, wallet.publicKey),
-              arenaAccount: pda,
-            })
-            .rpc();
-          return;
-        } catch (e: any) {
-          if (!SESSION_FAILURE.test(String(e?.message ?? e))) throw e;
-        }
-      }
-      await programEr.methods
-        .upgradeBot(arena.id, kind === "speed" ? { speed: {} } : { vision: {} })
-        .accountsPartial({
-          signer: wallet.publicKey,
+  async function withPlayerSigner(
+    send: (program: Program<Glue>, accounts: PlayerAccounts) => Promise<unknown>
+  ) {
+    const now = Math.floor(Date.now() / 1000);
+    if (session && programSession && isSessionUsable(session.validUntil, now)) {
+      try {
+        await send(programSession, {
+          signer: session.kp.publicKey,
           playerWallet: wallet.publicKey,
-          sessionToken: PROGRAM_ID,
+          sessionToken: sessionTokenPda(session.kp.publicKey, wallet.publicKey),
           arenaAccount: pda,
-        })
-        .rpc();
+        });
+        return;
+      } catch (e: any) {
+        if (!SESSION_FAILURE.test(String(e?.message ?? e))) throw e;
+      }
+    }
+    await send(programEr, {
+      signer: wallet.publicKey,
+      playerWallet: wallet.publicKey,
+      sessionToken: PROGRAM_ID,
+      arenaAccount: pda,
     });
+  }
+
+  const upgrade = (kind: "speed" | "vision") =>
+    run(kind, () =>
+      withPlayerSigner((program, accounts) =>
+        program.methods
+          .upgradeBot(arena.id, kind === "speed" ? { speed: {} } : { vision: {} })
+          .accountsPartial(accounts)
+          .rpc()
+      )
+    );
+
+  const changeMode = (mode: ModeKey) =>
+    run("mode", () =>
+      withPlayerSigner((program, accounts) =>
+        program.methods
+          .setMode(
+            arena.id,
+            mode === "hunt" ? { hunt: {} } : mode === "defend" ? { defend: {} } : { gather: {} }
+          )
+          .accountsPartial(accounts)
+          .rpc()
+      )
+    );
 
   const enableSession = () =>
     run("renew", async () => {
@@ -199,32 +233,31 @@ export function Arena({ arena, pda, wallet, delegated }: {
 
       <Grid arena={arena} myIndex={myIndex} />
       <p className="muted small" style={{ margin: "6px 0 0" }}>
-        Your bot has a white ring. Circles show each bot's field of vision.
+        Your bot has a white ring. Circles show field of vision. Dashed ring: hunting.
+        Thick ring: defending.
       </p>
-
-      <div className="list-head">
-        <span>Player</span>
-        <span style={{ marginLeft: "auto" }}>Score</span>
-      </div>
-      {arena.players.map((p: PublicKey, i: number) => {
-        const key = p.toBase58();
-        return (
-          <div key={key} className="player-row">
-            <span className="swatch" style={{ background: BOT_COLOURS[i % BOT_COLOURS.length] }} />
-            <span>{displayName(arena, i)}{key === myKey ? " (you)" : ""}</span>
-            <span style={{ marginLeft: "auto", fontFamily: "monospace" }}>
-              {arena.bots[i].score.toNumber()}
-            </span>
-          </div>
-        );
-      })}
 
       {myBot && running && (
         <>
           <div className="upgrade-head">
-            <span className="muted small">{sessionOn ? "Instant upgrades on" : "Your bot"}</span>
+            <span className="muted small">{sessionOn ? "Instant actions on" : "Your bot"}</span>
             <span><strong>{credits}</strong> <span className="muted small">credits</span></span>
           </div>
+
+          <div className="modes" role="group" aria-label="Bot mode">
+            {MODES.map((m) => (
+              <button
+                key={m.key}
+                className={`mode-btn${myMode === m.key ? " active" : ""}`}
+                aria-pressed={myMode === m.key}
+                disabled={pending !== null || myMode === m.key}
+                onClick={() => changeMode(m.key)}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
           <div className="upgrades">
             <UpgradeCard
               name="Speed"
@@ -245,15 +278,34 @@ export function Arena({ arena, pda, wallet, delegated }: {
               onClick={() => upgrade("vision")}
             />
           </div>
+
           {showEnable && (
             <button style={{ width: "100%", marginTop: 8 }} disabled={pending !== null} onClick={enableSession}>
               {pending === "renew"
                 ? "Enabling…"
-                : session ? "Renew instant upgrades" : "Enable instant upgrades"}
+                : session ? "Renew instant actions" : "Enable instant actions"}
             </button>
           )}
         </>
       )}
+
+      <div className="list-head">
+        <span>Player</span>
+        <span style={{ marginLeft: "auto" }}>Score</span>
+      </div>
+      {arena.players.map((p: PublicKey, i: number) => {
+        const key = p.toBase58();
+        return (
+          <div key={key} className="player-row">
+            <span className="swatch" style={{ background: BOT_COLOURS[i % BOT_COLOURS.length] }} />
+            <span>{displayName(arena, i)}{key === myKey ? " (you)" : ""}</span>
+            <span className="muted small">· {modeLabel(modeOf(arena.bots[i]))}</span>
+            <span style={{ marginLeft: "auto", fontFamily: "monospace" }}>
+              {arena.bots[i].score.toNumber()}
+            </span>
+          </div>
+        );
+      })}
 
       {canForce && (
         <div className="card" style={{ marginTop: 16 }}>
@@ -265,6 +317,7 @@ export function Arena({ arena, pda, wallet, delegated }: {
           </button>
         </div>
       )}
+
       {canForce && stalled && <EmergencyRefund pda={pda} wallet={wallet} />}
 
       {err && <p className="error">{err}</p>}

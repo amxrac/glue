@@ -1,4 +1,4 @@
-use crate::{constants::*, error::*};
+use crate::{constants::*, error::*, BotMode::Gather};
 use anchor_lang::prelude::*;
 use magicblock_magic_program_api::{pda::CRANK_SEED, CRANK_PROGRAM_ID};
 
@@ -75,7 +75,14 @@ pub enum ArenaStatus {
     Finished,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, Copy, Default)]
+#[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, Copy, PartialEq, Eq, Debug)]
+pub enum BotMode {
+    Hunt,
+    Gather,
+    Defend,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, Copy)]
 pub struct Bot {
     pub x: i16,
     pub y: i16,
@@ -86,6 +93,8 @@ pub struct Bot {
     pub active: bool,
     pub flip_x: bool,
     pub flip_y: bool,
+    pub mode: BotMode,
+    pub robbed_cooldown_until: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, InitSpace, Clone, Copy, Default)]
@@ -112,6 +121,8 @@ pub const fn default_bot() -> Bot {
         active: false,
         flip_x: false,
         flip_y: false,
+        mode: BotMode::Gather,
+        robbed_cooldown_until: 0,
     }
 }
 

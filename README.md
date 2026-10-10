@@ -1,13 +1,15 @@
 # glue
 
 glue is a real-time autonomous bot arena on Solana, built with MagicBlock Ephemeral Rollups.
-
+ 
 Each player owns one bot. Bots compete autonomously to collect resources in a shared arena. Players do not control bot movement; they influence outcome by purchasing upgrades mid-match. Entry fees form the pot, and after about 90 seconds, the game ends, and the highest scoring player takes the pot.
 
 Play on devnet: https://glue-2cb.pages.dev/
+
 Program ID: `EVh92BTdvhGSwQ2tx3wgZftuRfsP2oXfEcUmXoSwP9Hd`
 
 ## How to play
+You need a Solana wallet (e.g. Phantom) on devnet with some devnet SOL (free from a [faucet](https://faucet.solana.com/)). On mobile, open the site in your wallet app's built-in browser.
 1. **Host** creates an arena, sets the entry fee in SOL, and shares the invite link.
 2. **Players** (2–6) join by paying the entry fee.
 3. **The match** runs for about 90 seconds. Bots chase the nearest resource inside their field of vision (the circle around them) and wander when nothing is in sight. Each resource is worth 10 points and 10 credits.
@@ -49,7 +51,7 @@ flowchart LR
 
 - **The arena** (bots, resources, ticks, scores) is delegated to the ER for the match, so that the simulation can run at 10 ticks/second.
 - **The vault** holds the entry fees and stays on the base layer.
-- **`schedule_advance` enforces the crank interval (100ms) and iteration count**, so the match length cannot be manipulated from the client.
+- **`schedule_advance`** enforces the crank interval (100ms) and enough iterations to finish a match (about 90 seconds).
 - Match length is capped at `max_ticks` (900) on-chain; the crank interval (100ms in the frontend) is set by the client, so the match's duration in seconds isn't enforced. A slower crank only lengthens the match, and a stall past 200s ends in a full refund via force_finish.
 - **The frontend picks the network by account owner.** It reads the arena from the base layer or from the ER while the delegation program owns it, polling every 150ms during a match. The screen (landing, lobby, arena, result) follows the arena's on-chain status, so every player switches screens together when the host starts the match.
 - A throwaway keypair (**Session keys**) valid for 20 minutes is generated per arena, created in the create/join transaction, and kept in `localStorage`. While valid, it signs upgrades on the ER with no wallet popup. After expiry, a background sweep revokes the key and returns its leftover SOL to the wallet.
@@ -174,11 +176,12 @@ glue/
 ```
 
 ## Stack
-- Anchor 
-- ephemeral-rollups-sdk 
-- session-keys 
-- React + Vite 
-- @coral-xyz/anchor (client) 
-- @magicblock-labs/gum-sdk 
-- LiteSVM
+- Anchor 1.0.2
+- ephemeral-rollups-sdk 0.16.2
+- session-keys 3.1.1
+- React 19.3 + Vite 8.3
+- @coral-xyz/anchor 0.32.1 (client)
+- @solana/web3.js 1.99
+- @magicblock-labs/gum-sdk 3.0.10
+- LiteSVM 0.10
 - Helius RPC (devnet)

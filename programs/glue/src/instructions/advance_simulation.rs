@@ -21,6 +21,7 @@ impl<'info> AdvanceSimulation<'info> {
         self.increment_tick()?;
         self.update_bots()?;
         self.resolve_resource_collection()?;
+        self.resolve_robberies()?;
         self.spawn_resources()?;
         self.finish_if_complete()?;
 
@@ -65,23 +66,47 @@ impl<'info> AdvanceSimulation<'info> {
             let bot = self.arena_account.bots[bot_index];
             let vision = bot.vision as i32;
             let vision_sq = vision * vision;
-            let speed = bot.speed as i16;
+            let speed = if bot.mode == BotMode::Defend {
+                bot.speed.saturating_sub(DEFEND_SPEED_PENALTY).max(1)
+            } else {
+                bot.speed
+            } as i16;
 
             let mut target = None;
             let mut closest_distance = i32::MAX;
+            let mut chasing_bot = false;
 
-            for resource in resources.iter() {
-                if !resource.active {
-                    continue;
+            if bot.mode == BotMode::Hunt {
+                for (other_index, other) in self.arena_account.bots.iter().enumerate() {
+                    if other_index == bot_index
+                        || !other.active
+                        || other.mode == BotMode::Defend
+                        || tick < other.robbed_cooldown_until
+                        || other.score == 0
+                    {
+                        continue;
+                    }
+                    let dx = other.x as i32 - bot.x as i32;
+                    let dy = other.y as i32 - bot.y as i32;
+                    let distance = dx * dx + dy * dy;
+                    if distance <= vision_sq && distance < closest_distance {
+                        closest_distance = distance;
+                        target = Some((other.x, other.y));
+                    }
                 }
-
-                let dx = resource.x as i32 - bot.x as i32;
-                let dy = resource.y as i32 - bot.y as i32;
-                let distance = dx * dx + dy * dy;
-
-                if distance <= vision_sq && distance < closest_distance {
-                    closest_distance = distance;
-                    target = Some((resource.x, resource.y));
+                chasing_bot = target.is_some();
+            } else {
+                for resource in resources.iter() {
+                    if !resource.active {
+                        continue;
+                    }
+                    let dx = resource.x as i32 - bot.x as i32;
+                    let dy = resource.y as i32 - bot.y as i32;
+                    let distance = dx * dx + dy * dy;
+                    if distance <= vision_sq && distance < closest_distance {
+                        closest_distance = distance;
+                        target = Some((resource.x, resource.y));
+                    }
                 }
             }
 
@@ -127,21 +152,22 @@ impl<'info> AdvanceSimulation<'info> {
                 }
             };
 
-            let dx = target_x - bot.x;
-            let dy = target_y - bot.y;
+            let step = |d: i16| -> i16 {
+                if chasing_bot {
+                    if d.abs() <= 1 {
+                        0
+                    } else {
+                        d.signum() * speed.min(d.abs() - 1)
+                    }
+                } else if d != 0 {
+                    d.signum() * speed.min(d.abs())
+                } else {
+                    0
+                }
+            };
 
-            let mut new_x = bot.x;
-            let mut new_y = bot.y;
-
-            if dx != 0 {
-                new_x += dx.signum() * speed.min(dx.abs());
-            }
-            if dy != 0 {
-                new_y += dy.signum() * speed.min(dy.abs());
-            }
-
-            new_x = new_x.clamp(0, MAP_WIDTH - 1);
-            new_y = new_y.clamp(0, MAP_HEIGHT - 1);
+            let new_x = (bot.x + step(target_x - bot.x)).clamp(0, MAP_WIDTH - 1);
+            let new_y = (bot.y + step(target_y - bot.y)).clamp(0, MAP_HEIGHT - 1);
 
             if coordinate_occupied(
                 &self.arena_account,
@@ -165,7 +191,7 @@ impl<'info> AdvanceSimulation<'info> {
         let mut resources = self.arena_account.resources;
 
         for bot in self.arena_account.bots.iter_mut() {
-            if !bot.active {
+            if !bot.active || bot.mode == BotMode::Hunt {
                 continue;
             }
 
@@ -177,14 +203,63 @@ impl<'info> AdvanceSimulation<'info> {
                 if bot.x == resource.x && bot.y == resource.y {
                     resource.active = false;
 
-                    bot.score += RESOURCE_REWARD;
-                    bot.credits += RESOURCE_REWARD;
+                    let reward = if bot.mode == BotMode::Defend {
+                        DEFEND_RESOURCE_REWARD
+                    } else {
+                        RESOURCE_REWARD
+                    };
+
+                    bot.score += reward;
+                    bot.credits += reward;
 
                     break;
                 }
             }
         }
         self.arena_account.resources = resources;
+        Ok(())
+    }
+
+    fn resolve_robberies(&mut self) -> Result<()> {
+        let tick = self.arena_account.tick;
+        let n = self.arena_account.players.len();
+        if n == 0 {
+            return Ok(());
+        }
+
+        let start = (tick % n as u64) as usize;
+        for k in 0..n {
+            let h = (start + k) % n;
+            let hunter = self.arena_account.bots[h];
+
+            if !hunter.active || hunter.mode != BotMode::Hunt || tick < hunter.robbed_cooldown_until
+            {
+                continue;
+            }
+
+            let victim = (0..n).map(|k| (start + k) % n).find(|&v| {
+                let b = self.arena_account.bots[v];
+                v != h
+                    && b.active
+                    && b.mode != BotMode::Defend
+                    && tick >= b.robbed_cooldown_until
+                    && b.score > 0
+                    && (b.x - hunter.x).abs() <= 1
+                    && (b.y - hunter.y).abs() <= 1
+            });
+            let Some(v) = victim else { continue };
+
+            let stolen = self.arena_account.bots[v].score.min(STEAL_AMOUNT);
+            self.arena_account.bots[v].score -= stolen;
+            self.arena_account.bots[v].robbed_cooldown_until = tick
+                .checked_add(ROB_COOLDOWN_TICKS)
+                .ok_or(ArenaError::CounterOverflow)?;
+            self.arena_account.bots[h].score = self.arena_account.bots[h]
+                .score
+                .checked_add(stolen)
+                .ok_or(ArenaError::CounterOverflow)?;
+        }
+
         Ok(())
     }
 

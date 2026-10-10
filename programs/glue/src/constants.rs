@@ -3,7 +3,6 @@ use anchor_lang::prelude::*;
 #[constant]
 pub const DEFAULT_VISION: u16 = 10;
 pub const DEFAULT_SPEED: u16 = 2;
-pub const DEFAULT_CARRY_CAPACITY: u16 = 1;
 pub const MAP_WIDTH: i16 = 100;
 pub const MAP_HEIGHT: i16 = 100;
 pub const MAX_POSITION_ATTEMPTS: u8 = 20;
@@ -31,3 +30,7 @@ pub const TICK_INTERVAL_MS: i64 = 100;
 pub const MAX_TICKS: u64 = 900;
 pub const EMERGENCY_REFUND_SECS: i64 = 5 * 60 * 60;
 pub const DELEGATION_PROGRAM_ID: Pubkey = pubkey!("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
+pub const ROB_COOLDOWN_TICKS: u64 = 50;
+pub const DEFEND_SPEED_PENALTY: u16 = 1;
+pub const STEAL_AMOUNT: u64 = 20;
+pub const DEFEND_RESOURCE_REWARD: u64 = 5;

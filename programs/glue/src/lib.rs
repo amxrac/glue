@@ -72,6 +72,14 @@ pub mod glue {
         instructions::upgrade_bot::handler(ctx, id, upgrade)
     }
 
+    #[session_auth_or(
+       ctx.accounts.signer.key() == ctx.accounts.player_wallet.key(),
+       SessionError::InvalidToken
+   )]
+    pub fn set_mode(ctx: Context<SetMode>, id: u64, mode: BotMode) -> Result<()> {
+        instructions::set_mode::handler(ctx, id, mode)
+    }
+
     pub fn settle_arena(ctx: Context<SettleArena>, id: u64) -> Result<()> {
         instructions::settle_arena::handler(ctx, id)
     }

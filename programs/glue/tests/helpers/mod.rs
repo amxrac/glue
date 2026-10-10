@@ -1,10 +1,9 @@
 use {
     anchor_lang::{AccountDeserialize, AccountSerialize, InstructionData, ToAccountMetas},
     ephemeral_rollups_sdk::vrf::consts::scoped_vrf_identity,
-    glue::{ArenaAccount, UpgradeType, VaultAccount},
+    glue::{ArenaAccount, BotMode, UpgradeType, VaultAccount},
     litesvm::{types::TransactionResult, LiteSVM},
     session_keys::SessionTokenV2,
-    solana_account::Account,
     solana_clock::Clock,
     solana_instruction::{AccountMeta, Instruction},
     solana_keypair::Keypair,
@@ -239,6 +238,27 @@ impl TestConfig {
             .data(),
         };
         Self::send(&mut self.program, ix, signer, "upgrade_bot")
+    }
+
+    pub fn set_mode(
+        &mut self,
+        signer: &Keypair,
+        player_wallet: Pubkey,
+        session_token: Option<Pubkey>,
+        mode: BotMode,
+    ) -> TransactionResult {
+        let ix = Instruction {
+            program_id: PROGRAM_ID,
+            accounts: glue::accounts::SetMode {
+                signer: signer.pubkey(),
+                arena_account: self.arena_pda,
+                player_wallet,
+                session_token,
+            }
+            .to_account_metas(None),
+            data: glue::instruction::SetMode { id: ARENA_ID, mode }.data(),
+        };
+        Self::send(&mut self.program, ix, signer, "set_mode")
     }
 
     pub fn force_finish(&mut self, payer: &Keypair) -> TransactionResult {

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
 import { readBase, readEr, connBase, PROGRAM_ID } from "../lib/anchor";
 
-const MISSING_IF_NEW = 5;
-const MISSING_IF_SEEN = 2;
+const MISSING_BEFORE_CLOSED = 5;
+
+const connCheck = new Connection("https://api.devnet.solana.com", "confirmed");
 
 type Snapshot = {
   key: string;
@@ -30,36 +31,57 @@ export function useArena(pda: PublicKey | null, intervalMs = 400) {
     let delegated = false;
     let n = 0;
     let missing = 0;
-    let seen = false;
 
     const update = (patch: Partial<Snapshot>) => {
       if (cancelled) return;
       setSnap((prev) => ({ ...(prev && prev.key === key ? prev : blank(key)), ...patch }));
     };
 
+    const showArena = (a: any) => {
+      missing = 0;
+      update({ arena: a, closed: false, lastStatus: Object.keys(a.status)[0], error: null });
+    };
+
     const poll = async () => {
       n++;
       try {
         if (!delegated || n % 10 === 0) {
-          const info = await connBase.getAccountInfo(pda);
+          let info = await connBase.getAccountInfo(pda);
           if (cancelled) return;
+
+          if (info === null) {
+            try {
+              info = await connCheck.getAccountInfo(pda);
+            } catch {
+              return;
+            }
+            if (cancelled) return;
+          }
+
           if (info === null) {
             missing++;
-            if (missing >= (seen ? MISSING_IF_SEEN : MISSING_IF_NEW)) {
+            if (missing >= MISSING_BEFORE_CLOSED) {
               update({ closed: true, arena: null, error: null });
             }
             return;
           }
-          missing = 0;
+
           delegated = !info.owner.equals(PROGRAM_ID);
           update({ delegated });
+
+          if (!delegated) {
+            showArena(readBase.coder.accounts.decode("arenaAccount", info.data));
+            return;
+          }
         }
-        const a = await (delegated ? readEr : readBase).account.arenaAccount.fetch(pda);
+
+        const a = await readEr.account.arenaAccount.fetch(pda);
         if (cancelled) return;
-        seen = true;
-        update({ arena: a, closed: false, lastStatus: Object.keys(a.status)[0], error: null });
+        showArena(a);
       } catch (e) {
-        update({ error: String(e) });
+        const msg = String(e);
+        if (/does not exist|no data/i.test(msg)) return;
+        update({ error: msg });
       }
     };
 

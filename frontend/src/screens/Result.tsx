@@ -10,6 +10,12 @@ type Action =
   | { kind: "note"; text: string }
   | null;
 
+const SETTLED_READ_TIMEOUT_MS = 20_000;
+const GONE_CHECK_TIMEOUT_MS = 8_000;
+const USER_REJECTED = /reject|denied|cancel/i;
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 function leadersOf(a: any): PublicKey[] {
   return (a.players as PublicKey[]).filter((_, i) => (a.winners & (1 << i)) !== 0);
 }
@@ -61,7 +67,7 @@ export function Result({ arena, pda, wallet, onDone }: {
         .rpc();
     } catch (e: any) {
       const msg = String(e?.message ?? e);
-      if (/reject|ArenaNotFinished/i.test(msg)) throw e;
+      if (USER_REJECTED.test(msg) || /ArenaNotFinished/.test(msg)) throw e;
       setStepBoth("Confirming results");
       try { await waitFor("undelegation", backOnBase, 10_000); return; }
       catch { throw e; }
@@ -71,16 +77,61 @@ export function Result({ arena, pda, wallet, onDone }: {
     await waitFor("undelegation", backOnBase);
   }
 
+  async function readSettled(): Promise<any> {
+    const deadline = Date.now() + SETTLED_READ_TIMEOUT_MS;
+    let lastErr: unknown = null;
+    while (Date.now() < deadline) {
+      try {
+        const info = await connBase.getAccountInfo(pda);
+        if (info && info.owner.equals(PROGRAM_ID)) {
+          const a = readBase.coder.accounts.decode("arenaAccount", info.data);
+          if ("finished" in a.status && a.winners !== 0) return a;
+        }
+      } catch (e) {
+        lastErr = e;
+      }
+      await sleep(1000);
+    }
+    throw new Error(
+      `results not readable yet, try again in a moment${lastErr ? ` (${String(lastErr)})` : ""}`
+    );
+  }
+
+  async function arenaGone(): Promise<boolean> {
+    const deadline = Date.now() + GONE_CHECK_TIMEOUT_MS;
+    let misses = 0;
+    while (Date.now() < deadline) {
+      try {
+        const info = await connBase.getAccountInfo(pda);
+        misses = info === null ? misses + 1 : 0;
+        if (misses >= 2) return true;
+      } catch {
+        // unknown
+      }
+      await sleep(1000);
+    }
+    return false;
+  }
+
   async function claim() {
     const { programBase } = getPrograms(wallet);
     setStepBoth(forced ? "Sending refunds" : "Sending prize");
-    const settled = await readBase.account.arenaAccount.fetch(pda);
+
+    const settled = await readSettled();
     const winners = leadersOf(settled);
-    if (winners.length === 0) throw new Error("no winners recorded on the settled arena");
-    await programBase.methods.claimPrize(arena.id)
-      .accountsPartial({ caller: wallet.publicKey, arenaAccount: pda, host: settled.host })
-      .remainingAccounts(winners.map((pubkey) => ({ pubkey, isWritable: true, isSigner: false })))
-      .rpc();
+
+    try {
+      await programBase.methods.claimPrize(arena.id)
+        .accountsPartial({ caller: wallet.publicKey, arenaAccount: pda, host: settled.host })
+        .remainingAccounts(winners.map((pubkey) => ({ pubkey, isWritable: true, isSigner: false })))
+        .rpc();
+    } catch (e: any) {
+      const msg = String(e?.message ?? e);
+      if (USER_REJECTED.test(msg)) throw e;
+      setStepBoth("Checking");
+      if (!(await arenaGone())) throw e;
+    }
+
     history.replaceState(null, "", location.pathname);
     onDone();
   }

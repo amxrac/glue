@@ -34,3 +34,4 @@ pub const ROB_COOLDOWN_TICKS: u64 = 50;
 pub const DEFEND_SPEED_PENALTY: u16 = 1;
 pub const STEAL_AMOUNT: u64 = 20;
 pub const DEFEND_RESOURCE_REWARD: u64 = 5;
+pub const ROB_RANGE: i16 = 2;

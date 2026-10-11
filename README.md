@@ -14,7 +14,7 @@ You need a Solana wallet (e.g. Phantom) on devnet with some devnet SOL (free fro
 2. **Players** (2–6) join by paying the entry fee.
 3. **The match** runs for about 90 seconds. Bots chase the nearest resource inside their field of vision (the circle around them) and wander when nothing is in sight. Each resource is worth 10 points and 10 credits.
 4. **Upgrades** cost 10 credits: **Speed** (+1 cell per step) or **Vision** (+1 radius). Spending credits never lowers your score.
-5. **Modes** include Gather, Hunt, and Defend. In Gather mode, bots collect resources. In Hunt mode, bots can chase other bots and steal up to 20 points from them, but collect no resources. In Defend mode, bots can't be robbed, but move 1 cell per step slower and collect half rewards. A bot that's just been robbed is protected and can't rob or be robbed for 5 seconds.
+5. **Modes** include Gather, Hunt, and Defend. In Gather mode, bots collect resources. In Hunt mode, bots can chase other bots and steal up to 20 points from any bot within 2 cells, but collect no resources. In Defend mode, bots can't be robbed, but move 1 cell per step slower and collect half rewards. A bot that's just been robbed is protected and can't rob or be robbed for 5 seconds.
 6. **Payout** goes to the top score; ties split it.
 
 ## Architecture
@@ -66,7 +66,7 @@ flowchart LR
 - **The frontend picks the network by account owner.** It reads the arena from the base layer or from the ER while the delegation program owns it, polling every 150ms during a match. The screen (landing, lobby, arena, result) follows the arena's on-chain status, so every player switches screens together when the host starts the match.
 - A throwaway keypair (**Session key**) valid for 20 minutes is generated per arena, registered in the create/join transaction, and stored in `localStorage`. While valid, it signs upgrades and mode changes on the ER without wallet popups. After expiry, a background sweep revokes the key and returns its leftover SOL to the wallet.
 - **The board** is a canvas redrawn every frame; bots glide between on-chain positions.
-- After the match, any player's wallet signs `settle_arena` on the ER ("Claim prize" for the winner, "Finalize results" for others). That commits the final state and undelegates the arena so the claim can run on the base layer.
+- After the match, the winner's wallet signs `settle_arena` on the ER ("Claim prize"). That commits the final state and undelegates the arena so the claim can run on the base layer.
 
 ## MagicBlock features used
 

@@ -208,7 +208,6 @@ impl<'info> AdvanceSimulation<'info> {
                     } else {
                         RESOURCE_REWARD
                     };
-
                     bot.score += reward;
                     bot.credits += reward;
 
@@ -228,6 +227,7 @@ impl<'info> AdvanceSimulation<'info> {
         }
 
         let start = (tick % n as u64) as usize;
+
         for k in 0..n {
             let h = (start + k) % n;
             let hunter = self.arena_account.bots[h];
@@ -244,8 +244,8 @@ impl<'info> AdvanceSimulation<'info> {
                     && b.mode != BotMode::Defend
                     && tick >= b.robbed_cooldown_until
                     && b.score > 0
-                    && (b.x - hunter.x).abs() <= 1
-                    && (b.y - hunter.y).abs() <= 1
+                    && (b.x - hunter.x).abs() <= ROB_RANGE
+                    && (b.y - hunter.y).abs() <= ROB_RANGE
             });
             let Some(v) = victim else { continue };
 

@@ -126,6 +126,36 @@ fn hunter_robs_adjacent_bot() {
 }
 
 #[test]
+fn hunter_robs_bot_two_cells_away() {
+    let (mut t, _player) = setup_running();
+    let payer = funded_keypair(&mut t);
+    clear_resources(&mut t);
+    place_bot(&mut t, 0, 50, 50, BotMode::Hunt, 0, 0);
+    place_bot(&mut t, 1, 52, 48, BotMode::Gather, 50, 0);
+
+    t.advance_simulation(&payer).unwrap();
+
+    let arena = t.arena().unwrap();
+    assert_eq!(arena.bots[1].score, 50 - glue::STEAL_AMOUNT);
+    assert_eq!(arena.bots[0].score, glue::STEAL_AMOUNT);
+}
+
+#[test]
+fn bot_three_cells_away_is_not_robbed() {
+    let (mut t, _player) = setup_running();
+    let payer = funded_keypair(&mut t);
+    clear_resources(&mut t);
+    place_bot(&mut t, 0, 50, 50, BotMode::Hunt, 0, 0);
+    place_bot(&mut t, 1, 53, 50, BotMode::Gather, 50, 0);
+
+    t.advance_simulation(&payer).unwrap();
+
+    let arena = t.arena().unwrap();
+    assert_eq!(arena.bots[1].score, 50);
+    assert_eq!(arena.bots[0].score, 0);
+}
+
+#[test]
 fn robbery_is_capped_at_victim_score() {
     let (mut t, _player) = setup_running();
     let payer = funded_keypair(&mut t);
@@ -328,7 +358,6 @@ fn hunter_stops_next_to_target_and_robs() {
     clear_resources(&mut t);
     place_bot(&mut t, 0, 50, 50, BotMode::Hunt, 0, 2);
     place_bot(&mut t, 1, 53, 50, BotMode::Gather, 50, 0);
-
     t.advance_simulation(&payer).unwrap();
 
     let arena = t.arena().unwrap();

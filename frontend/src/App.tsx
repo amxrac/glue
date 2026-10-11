@@ -20,6 +20,8 @@ import { Landing, parseArenaInput } from "./screens/Landing";
 import { sweepExpiredSessions } from "./lib/session";
 import { EmergencyRefund } from "./components/EmergencyRefund";
 
+const REPO_URL = "https://github.com/amxrac/glue";
+
 function useSessionSweep() {
   useEffect(() => {
     const sweep = () => { sweepExpiredSessions().catch(() => {}); };
@@ -54,12 +56,33 @@ function Notice({ children, onBack, action, footer }: {
   );
 }
 
+function RepoLink() {
+  return (
+    <a
+      href={REPO_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Source code on GitHub"
+      title="Source code on GitHub"
+      style={{ display: "inline-flex", alignItems: "center", padding: 6, borderRadius: 8 }}
+    >
+      <picture>
+        <source srcSet="/GitHub_Invertocat_White.svg" media="(prefers-color-scheme: dark)" />
+        <img src="/GitHub_Invertocat_Black.svg" alt="" width={22} height={22} style={{ display: "block" }} />
+      </picture>
+    </a>
+  );
+}
+
 function TopBar() {
   const wallet = useAnchorWallet();
   return (
     <header className="topbar">
       <span className="brand">glue</span>
-      {wallet && <WalletMultiButton />}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <RepoLink />
+        {wallet && <WalletMultiButton />}
+      </div>
     </header>
   );
 }

@@ -37,8 +37,6 @@ impl<'info> CancelArena<'info> {
             ArenaError::MissingRefundAccounts
         );
 
-        let vault_account_info = self.vault_account.to_account_info();
-
         for (i, player_key) in players.iter().enumerate() {
             let dest = &remaining[i];
             require!(dest.key == player_key, ArenaError::InvalidRefundAccount);

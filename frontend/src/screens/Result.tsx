@@ -152,11 +152,9 @@ export function Result({ arena, pda, wallet, onDone }: {
 
   const action: Action =
     delegated === null ? null
-    : delegated
-      ? isWinner ? { kind: "button", label: primaryLabel, fn: settleAndClaim }
-      : { kind: "button", label: "Finalize results", fn: settle }
-    : isWinner ? { kind: "button", label: primaryLabel, fn: claim }
-    : { kind: "note", text: "Results saved. Waiting for the winner to claim." };
+    : isWinner
+      ? { kind: "button", label: primaryLabel, fn: delegated ? settleAndClaim : claim }
+      : { kind: "note", text: "Waiting for the winner to claim." };
 
   const potSol = (arena.entryFee.toNumber() * players.length) / 1e9;
 

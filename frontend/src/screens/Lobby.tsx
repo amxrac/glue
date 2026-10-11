@@ -3,7 +3,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
 import {
-  getPrograms, arenaPda, readEr, connBase, connEr
+  getPrograms, arenaPda, readEr, connBase, connEr,
   ENTRY_FEE, PROGRAM_ID, ORACLE_QUEUE, VALIDATOR, DELEGATION_PROGRAM, INTERVAL_MS,
 } from "../lib/anchor";
 import { waitFor, readArenaBase } from "../lib/waitFor";

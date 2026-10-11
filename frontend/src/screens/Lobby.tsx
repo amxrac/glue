@@ -3,14 +3,15 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import type { AnchorWallet } from "@solana/wallet-adapter-react";
 import {
-  getPrograms, arenaPda, readBase, readEr, connBase,
+  getPrograms, arenaPda, readEr, connBase, connEr
   ENTRY_FEE, PROGRAM_ID, ORACLE_QUEUE, VALIDATOR, DELEGATION_PROGRAM, INTERVAL_MS,
 } from "../lib/anchor";
-import { waitFor } from "../lib/waitFor";
+import { waitFor, readArenaBase } from "../lib/waitFor";
 import { displayName, nameByteLength, MAX_NAME_LEN } from "../lib/names";
 import { prepareSession, removeSession } from "../lib/session";
 
 const MAGIC_PROGRAM = new PublicKey("Magic11111111111111111111111111111111111111");
+const ER_LOAD_TIMEOUT_MS = 30_000;
 
 function parseSol(input: string): anchor.BN | null {
   const s = input.trim();
@@ -108,7 +109,7 @@ export function Lobby({
       };
 
       if (!(await isDelegated())) {
-        let a = await readBase.account.arenaAccount.fetch(pda!);
+        let a = await readArenaBase(pda!);
 
         if (a.vrfSeed === null) {
           setStepBoth("requesting randomness");
@@ -116,9 +117,7 @@ export function Lobby({
             .accountsPartial({ host: wallet.publicKey, arenaAccount: pda!, oracleQueue: ORACLE_QUEUE })
             .rpc();
           setStepBoth("waiting for VRF");
-          await waitFor("vrf_seed", async () =>
-            (await readBase.account.arenaAccount.fetch(pda!)).vrfSeed !== null);
-          a = await readBase.account.arenaAccount.fetch(pda!);
+          a = await readArenaBase(pda!, (x) => x.vrfSeed !== null, 120_000);
         }
 
         if ("waiting" in a.status) {
@@ -139,8 +138,23 @@ export function Lobby({
         await waitFor("delegation", isDelegated);
       }
 
-      const live = await readEr.account.arenaAccount.fetch(pda!).catch(() => null);
-      if (!live || live.tick.isZero()) {
+      setStepBoth("loading on rollup");
+      let live: any = null;
+      await waitFor(
+        "the arena on the rollup",
+        async () => {
+          try {
+            live = await readEr.account.arenaAccount.fetch(pda!);
+            return true;
+          } catch {
+            await connEr.requestAirdrop(pda!, 1).catch(() => {});
+            return false;
+          }
+        },
+        ER_LOAD_TIMEOUT_MS
+      );
+
+      if (live.tick.isZero()) {
         setStepBoth("starting simulation");
         await programEr.methods
           .scheduleAdvance(id, {

@@ -8,6 +8,8 @@ Play on devnet: https://glue-2cb.pages.dev/
 
 Program ID: `EVh92BTdvhGSwQ2tx3wgZftuRfsP2oXfEcUmXoSwP9Hd`
 
+Built for Solana Blitz V9: Crypto World's Fair
+
 ## How to play
 You need a Solana wallet (e.g. Phantom) on devnet with some devnet SOL (free from a [faucet](https://faucet.solana.com/)). On mobile, open the site in your wallet app's built-in browser.
 1. **Host** creates an arena, sets the entry fee in SOL, and shares the invite link.
